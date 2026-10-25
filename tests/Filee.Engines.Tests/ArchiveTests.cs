@@ -59,7 +59,7 @@ public class ArchiveTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public void Every_readable_archive_converts_in_one_step(string from)
     {
         var planner = fx.Catalog.CreatePlanner(["archive"]);
-        foreach (var to in new[] { "zip", "7z", "tar", "tgz", "tbz2", "txz", FormatRegistry.Folder })
+        foreach (var to in new[] { "zip", "7z", "tar", "tgz", "tbz2", "txz", "iso", FormatRegistry.Folder })
         {
             var route = planner.Plan(from, to);
             Assert.NotNull(route);

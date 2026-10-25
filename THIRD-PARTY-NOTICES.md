@@ -47,6 +47,9 @@ dynamically; you may replace those libraries with your own build of libuiohook.
 
 Used by the tests only (not redistributed): DocumentFormat.OpenXml (Open XML SDK, MIT, https://github.com/dotnet/Open-XML-SDK) validates the DOCX files Filee writes.
 
+Archive tests also use sample archives from libarchive (BSD), SevenZipExtractor (MIT), and apple-platform-rs
+(MIT). Their source revisions, original names, and license texts are in `tests/Filee.Engines.Tests/Archives/`.
+
 ## Engines
 
 Bundled with the installer:

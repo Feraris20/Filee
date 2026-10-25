@@ -1290,7 +1290,7 @@ bundled with the installer), never a 7-Zip installed on the PC. It runs as a sep
   when complete. When the archive holds exactly one top folder, its content becomes the result folder (`photos.zip`
   with `photos/…` gives `photos/…`, not `photos/photos/…`). Name conflicts follow the preset: `name (2)`, overwrite
   (files are merged into the existing folder) or skip.
-- **Archive → archive** unpacks into the job's temp folder and packs everything into the target. `Preset.Archive.Level`
+- **Archive → archive**, including ISO, unpacks into the job's temp folder and packs everything into the target. `Preset.Archive.Level`
   maps to Store / Fastest / Optimal / SmallestSize in-process and to 7-Zip's `-mx0/1/5/9`.
 - **Compress into one archive** (`Archive.CombineIntoOne`, the "One ZIP" preset): `JobQueue` hands all dropped files,
   of any type and unconverted, to `IFileCombiner` (implemented by this engine). The archive is named after the first

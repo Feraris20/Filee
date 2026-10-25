@@ -1,7 +1,7 @@
 // Archives: unpack (to a folder, the "Extract" preset), convert between archive formats (ZIP, 7Z, TAR, TAR.GZ,
-// TAR.BZ2, TAR.XZ and single-file GZ / BZ2 / XZ), and "Compress into one archive" for any files (IFileCombiner).
+// TAR.BZ2, TAR.XZ, ISO and single-file GZ / BZ2 / XZ), and "Compress into one archive" for any files (IFileCombiner).
 // Reading uses the bundled 7-Zip (engines/7zip, LGPL, separate process) plus Filee's own ALZ, EGG and lzip readers;
-// ZIP, TAR and TAR.GZ are written in-process, the other formats by 7-Zip. See docs/ENGINES.md.
+// ZIP, TAR, TAR.GZ and ISO are written in-process, the other formats by 7-Zip. See docs/ENGINES.md.
 
 using Filee.Core.Conversion;
 using Filee.Core.Formats;
@@ -14,7 +14,7 @@ namespace Filee.Engines.Archives;
 public sealed class ArchiveConverter : IConverter, IFileCombiner
 {
     /// <summary>Archive formats Filee writes (plus <see cref="FormatRegistry.Folder"/>).</summary>
-    private static readonly string[] ArchiveTargets = ["zip", "7z", "tar", "tgz", "tbz2", "txz"];
+    private static readonly string[] ArchiveTargets = ["zip", "7z", "tar", "tgz", "tbz2", "txz", "iso"];
 
     /// <summary>Compressed single files (no names or folders inside); they convert among each other.</summary>
     private static readonly string[] SingleFileSources = ["gz", "bz2", "xz", "lzma", "z", "lz"];
@@ -107,7 +107,7 @@ public sealed class ArchiveConverter : IConverter, IFileCombiner
 
     public bool CanCombineInto(string format) =>
         ArchivePacker.BuiltInFormats.Contains(format)
-        || (ArchiveTargets.Contains(format) || ArchivePacker.SingleFileFormats.Contains(format))
+        || (ArchiveTargets.Contains(format) && format != "iso" || ArchivePacker.SingleFileFormats.Contains(format))
            && (_sevenZip ??= SevenZip.Locate()) is not null;
 
     public async Task CombineAsync(IReadOnlyList<string> inputPaths, string outputPath, string format, Preset preset,
