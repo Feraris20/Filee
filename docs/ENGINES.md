@@ -1286,12 +1286,22 @@ bundled with the installer), never a 7-Zip installed on the PC. It runs as a sep
   source folder is refused. Dots in folder names are preserved in the output name. Existing destinations follow
   the preset's rename, skip or overwrite rule, and an old destination inside the source is excluded from the image.
   This direct-only route does not become an intermediate step for other conversions.
-- **ISO output** uses DiscUtils.Iso9660 (MIT), in-process, to write a data disc with ISO 9660 and Joliet Unicode names.
+- **ISO output** uses DiscUtils.Iso9660 (MIT), in-process. The preset's **ISO standard** selector chooses plain
+  **ISO 9660**, **ISO 9660 + Joliet** (the default), or **UDF 1.02 + ISO 9660**. Plain ISO 9660 uses uppercase ASCII names and may shorten
+  names; Joliet preserves Unicode names. ISO presets show this selector instead of archive compression controls.
   Files are streamed, empty directories and timestamps are retained, and the image replaces its destination only
   after completion. Cancellation or failure removes the temporary image. ISO output is uncompressed: archive
   compression levels have no effect. Joliet names over 64 UTF-16 characters, names containing semicolons, and
   individual files of 4 GiB or more are rejected rather than silently renamed or truncated. Boot records and disc
   metadata are not copied from source images; the result is a data disc, not a bootable clone.
+- **UDF output** uses the bundled mkisofs 3.02a10 on Windows, Linux and macOS. It writes a UDF 1.02 filesystem with
+  an ISO 9660 level-3 bridge; files may exceed 4 GiB. Unicode names and empty directories are preserved. Each
+  name is limited to 254 Latin-1 or 127 BMP Unicode characters; supplementary characters and line breaks are
+  rejected. Completely empty images are rejected because this mkisofs revision creates an unreadable empty root;
+  use Joliet for an empty image. Grafts explicitly list files and empty directories, so source links are not followed
+  and no extra copy of file contents is needed. Outputs still use atomic replacement and cancellation cleanup.
+  `build/build-mkisofs.ps1` prepares the pinned engine and matching sources. The portable workflow builds native
+  x64 and ARM64 engines; Linux release engines are built on Ubuntu 22.04 and passed into packaging.
 - **Extract** (target `folder`): the archive is unpacked into a hidden folder next to the result and moved into place
   when complete. When the archive holds exactly one top folder, its content becomes the result folder (`photos.zip`
   with `photos/…` gives `photos/…`, not `photos/photos/…`). Name conflicts follow the preset: `name (2)`, overwrite

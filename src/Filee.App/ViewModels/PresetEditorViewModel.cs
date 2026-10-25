@@ -103,6 +103,7 @@ public sealed partial class PresetEditorViewModel : ObservableObject
             r => r == 0 ? loc["presets.sample_rate.source"] : $"{r / 1000.0:0.##} kHz");
         WavFormats = Enum.GetValues<WavSampleFormat>().Select(v => new Choice<WavSampleFormat>(v, loc[$"presets.wav_format.{v}"])).ToList();
         ArchiveLevels = Enum.GetValues<ArchiveLevel>().Select(v => new Choice<ArchiveLevel>(v, loc[$"presets.archive_level.{v}"])).ToList();
+        IsoStandards = [new(IsoStandard.Iso9660Joliet, "ISO 9660 + Joliet"), new(IsoStandard.Iso9660, "ISO 9660"), new(IsoStandard.Udf102, "UDF 1.02 + ISO 9660")];
         TraceModes = Enum.GetValues<TracingMode>().Select(v => new Choice<TracingMode>(v, loc[$"presets.trace_mode.{v}"])).ToList();
         // Version names stay as AutoCAD calls them, in every language.
         CadVersions = Enum.GetValues<CadVersion>().Select(v => new Choice<CadVersion>(v,
@@ -140,6 +141,7 @@ public sealed partial class PresetEditorViewModel : ObservableObject
         _audioCodecValue = _edit.Media.AudioCodec;
         _hardwareEncoding = _edit.Media.HardwareEncoding;
         _archiveLevel = ArchiveLevels.First(l => l.Value == _edit.Archive.Level);
+        _isoStandardChoice = IsoStandards.FirstOrDefault(s => s.Value == _edit.Iso.Standard) ?? IsoStandards[0];
         _combineIntoOne = _edit.Archive.CombineIntoOne;
         _saveEveryFrame = _edit.Media.SaveEveryFrame;
         _extractMotionPhoto = _edit.Media.ExtractMotionPhoto;
@@ -224,6 +226,8 @@ public sealed partial class PresetEditorViewModel : ObservableObject
     public IReadOnlyList<Choice<int>> SampleRates { get; }
     public IReadOnlyList<Choice<WavSampleFormat>> WavFormats { get; }
     public IReadOnlyList<Choice<ArchiveLevel>> ArchiveLevels { get; }
+    /// <summary>The filesystems supported by the ISO writer.</summary>
+    public IReadOnlyList<Choice<IsoStandard>> IsoStandards { get; }
     public IReadOnlyList<Choice<TracingMode>> TraceModes { get; }
 
     /// <summary>The AutoCAD version a DWG or DXF is written in (CadOptions.Version, #489).</summary>
@@ -243,7 +247,7 @@ public sealed partial class PresetEditorViewModel : ObservableObject
         nameof(ShowMedia), nameof(ShowMediaQuality), nameof(ShowMaxHeight), nameof(ShowAudioBitrate), nameof(ShowRemoveAudio),
         nameof(ShowAudioChannels), nameof(ShowWav), nameof(VideoCodecs), nameof(VideoCodecChoice), nameof(ShowVideoCodec), nameof(ShowHardwareEncoding),
         nameof(AudioCodecs), nameof(AudioCodecChoice), nameof(ShowAudioCodec),
-        nameof(ShowArchive), nameof(ShowArchiveOptions), nameof(ShowExtractNote),
+        nameof(ShowArchive), nameof(ShowArchiveOptions), nameof(ShowExtractNote), nameof(ShowIso),
         nameof(ShowSaveEveryFrame), nameof(ShowAnimationSpeed), nameof(ShowTrace), nameof(ShowCad), nameof(ShowExtractMotionPhoto), nameof(ShowSlideshow),
         nameof(ShowLivePhotoChoice), nameof(LivePhotoKinds), nameof(LivePhotoChoice), nameof(IsLivePhoto), nameof(LivePhotoHint))]
     private Choice<string> _target;
@@ -486,6 +490,7 @@ public sealed partial class PresetEditorViewModel : ObservableObject
     /// <summary>Encode H.264 / HEVC / AV1 on the graphics chip when one works (MediaOptions.HardwareEncoding).</summary>
     [ObservableProperty] private bool _hardwareEncoding;
     [ObservableProperty] private Choice<ArchiveLevel> _archiveLevel;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(ShowUdfHint))] private Choice<IsoStandard> _isoStandardChoice;
     [ObservableProperty] private bool _combineIntoOne;
     [ObservableProperty] private bool _saveEveryFrame;
     [ObservableProperty] private bool _extractMotionPhoto;
@@ -529,6 +534,7 @@ public sealed partial class PresetEditorViewModel : ObservableObject
     partial void OnSampleRateChanged(Choice<int>? oldValue, Choice<int> newValue) => Choices.Restore(oldValue, newValue, v => SampleRate = v);
     partial void OnWavFormatChanged(Choice<WavSampleFormat>? oldValue, Choice<WavSampleFormat> newValue) => Choices.Restore(oldValue, newValue, v => WavFormat = v);
     partial void OnArchiveLevelChanged(Choice<ArchiveLevel>? oldValue, Choice<ArchiveLevel> newValue) => Choices.Restore(oldValue, newValue, v => ArchiveLevel = v);
+    partial void OnIsoStandardChoiceChanged(Choice<IsoStandard>? oldValue, Choice<IsoStandard> newValue) => Choices.Restore(oldValue, newValue, v => IsoStandardChoice = v);
     partial void OnTraceModeChanged(Choice<TracingMode>? oldValue, Choice<TracingMode> newValue) => Choices.Restore(oldValue, newValue, v => TraceMode = v);
     partial void OnCadVersionChanged(Choice<CadVersion>? oldValue, Choice<CadVersion> newValue) => Choices.Restore(oldValue, newValue, v => CadVersion = v);
     partial void OnCompressionLevelChanged(Choice<PdfCompression>? oldValue, Choice<PdfCompression> newValue) =>
@@ -609,7 +615,10 @@ public sealed partial class PresetEditorViewModel : ObservableObject
     public bool ShowMaxHeight => TargetIsVideo;
     public bool ShowAudioBitrate => TargetIsLossyMedia;
     public bool ShowRemoveAudio => TargetIsVideo;
-    public bool ShowArchive => TargetCategory == FormatCategory.Archive;
+    public bool ShowArchive => TargetCategory == FormatCategory.Archive && TargetId != "iso";
+    /// <summary>ISO outputs choose a filesystem instead of an archive compression level.</summary>
+    public bool ShowIso => TargetId == "iso";
+    public bool ShowUdfHint => IsoStandardChoice.Value == IsoStandard.Udf102;
     public bool ShowArchiveOptions => ShowArchive && TargetId != FormatRegistry.Folder;
     /// <summary>"Extract" has nothing to set; a line says what it does instead.</summary>
     public bool ShowExtractNote => TargetId == FormatRegistry.Folder;
@@ -751,7 +760,8 @@ public sealed partial class PresetEditorViewModel : ObservableObject
         media.LivePhotoLength = Seconds(LivePhotoLength, 3, MediaOptions.MinLivePhotoLength, MediaOptions.MaxLivePhotoLength);
         media.LivePhotoCover = Seconds(LivePhotoCover, 1.5, 0, MediaOptions.MaxLivePhotoLength);
         _original.Archive.Level = ArchiveLevel.Value;
-        _original.Archive.CombineIntoOne = CombineIntoOne;
+        _original.Archive.CombineIntoOne = TargetId != "iso" && CombineIntoOne;
+        _original.Iso.Standard = IsoStandardChoice.Value;
         _original.Trace.Mode = TraceMode.Value;
         _original.Trace.Colors = Math.Clamp(TraceColors, TracingOptions.MinColors, TracingOptions.MaxColors);
         _original.Trace.Detail = Math.Clamp(TraceDetail, 0, 100);

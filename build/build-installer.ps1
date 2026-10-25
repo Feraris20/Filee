@@ -93,6 +93,7 @@ elseif (-not $PublishDir) {
     # C++ runtime goes next to rhwp.exe and next to Filee.exe (unhwp.dll imports VCRUNTIME140.dll), so neither needs
     # the Visual C++ Redistributable (#248).
     & (Join-Path $PSScriptRoot 'fetch-engines.ps1') -Only rhwp, 7zip -Destination (Join-Path $PublishDir 'engines') -RuntimeTo $PublishDir
+    & (Join-Path $PSScriptRoot 'build-mkisofs.ps1') -Destination (Join-Path $PublishDir 'engines')
 }
 $PublishDir = (Resolve-Path $PublishDir).Path
 if (-not (Test-Path (Join-Path $PublishDir 'Filee.exe'))) { throw "Filee.exe is missing in $PublishDir" }

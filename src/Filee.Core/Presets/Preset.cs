@@ -96,6 +96,9 @@ public sealed class Preset
     /// <summary>Options used for archives (ZIP, 7Z, TAR ...).</summary>
     public ArchiveOptions Archive { get; set; } = new();
 
+    /// <summary>Filesystem used when creating an ISO image.</summary>
+    public IsoOptions Iso { get; set; } = new();
+
     /// <summary>Options used when a raster image is traced into vector shapes (PNG → SVG, DXF ...).</summary>
     public TracingOptions Trace { get; set; } = new();
 
@@ -134,7 +137,7 @@ public sealed class Preset
     public bool PacksIntoOneArchive =>
         Archive.CombineIntoOne
         && Formats.FormatRegistry.FindById(TargetFormat) is { Category: Formats.FormatCategory.Archive } archive
-        && archive.Id != Formats.FormatRegistry.Folder;
+        && archive.Id != Formats.FormatRegistry.Folder && archive.Id != "iso";
 
     /// <summary>
     /// True if converting a <paramref name="sourceFormat"/> file saves every frame as a picture
@@ -245,6 +248,7 @@ public sealed class Preset
         Document = Document.Clone(),
         Media = Media.Clone(),
         Archive = Archive.Clone(),
+        Iso = Iso.Clone(),
         Trace = Trace.Clone(),
         Cad = Cad.Clone(),
         Output = Output.Clone(),

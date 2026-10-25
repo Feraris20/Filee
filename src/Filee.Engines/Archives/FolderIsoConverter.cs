@@ -33,7 +33,7 @@ public sealed class FolderIsoConverter : IConverter
             .OrderBy(info => info.Name, StringComparer.Ordinal)
             .Select(info => new PackItem(info.FullName, info.Name)).ToList();
         await new ArchivePacker(null).PackAsync(items, output, "iso", step.Preset.Archive.Level,
-            step.WorkDirectory, progress, cancellationToken);
+            step.WorkDirectory, progress, cancellationToken, step.Preset.Iso.Standard);
         progress?.Report(1);
         return [output];
     }

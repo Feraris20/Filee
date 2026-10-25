@@ -64,6 +64,10 @@ jobs:
         shell: pwsh
         run: ./build/fetch-engines.ps1 -Only rhwp,pandoc,7zip
 
+      - name: Prepare UDF writer
+        shell: pwsh
+        run: ./build/build-mkisofs.ps1
+
       # Built first and tested like CI: the UI tests on their own with crash and hang blame (a crash names the
       # running test and leaves a dump in TestResults), then the rest.
       - name: Build

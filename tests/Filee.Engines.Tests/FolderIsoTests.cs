@@ -63,6 +63,20 @@ public class FolderIsoTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Empty(reader.GetFileSystemEntries("\\"));
     }
 
+    [Theory]
+    [InlineData(IsoStandard.Iso9660)]
+    [InlineData(IsoStandard.Iso9660Joliet)]
+    [InlineData(IsoStandard.Udf102)]
+    public async Task Folder_conversion_honours_the_selected_standard(IsoStandard standard)
+    {
+        if (standard == IsoStandard.Udf102)
+            Assert.SkipUnless(MkisofsWriter.Locate() is not null, "Bundled mkisofs required");
+        var source = MakeTree(fx.NewFolder(), "tree");
+        var job = await fx.ConvertAsync([source], new Preset { TargetFormat = "iso", Iso = { Standard = standard } });
+        Assert.Equal(JobState.Completed, job.State);
+        IsoStandardTests.AssertFilesystem(Assert.Single(job.Outputs), standard);
+    }
+
     [Fact]
     public void Folder_route_does_not_enable_archive_to_iso_indirectly()
     {
