@@ -161,7 +161,7 @@ Para desfazer, remova essas entradas em Segurança do Windows → Controle de ap
 | **Legendas**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | entre si, em UTF-8 (arquivos coreanos em CP949 são lidos corretamente) |
 | **Arquivos compactados**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | extrair, ZIP, 7Z, TAR, TAR.GZ;<br>quaisquer arquivos → um ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **Fontes**: TTF, OTF, WOFF, WOFF2, EOT | entre si |
+| **Fontes**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE, FNT v2/v3 monocromático e conjuntos de um byte compatíveis; somente entrada) | conversão entre os cinco formatos, um arquivo por tamanho (sem sufixo com um recurso). PE, fontes vetoriais e FNT avulso não são aceitos |
 | **Dados**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | entre si, CSV e XLSX (tabelas);<br>vCard, iCalendar ↔ CSV |
 | **Modelos 3D**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>leitura de FBX | entre si, prévia em PNG |
 | **Vetores geoespaciais**: Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV com coordenadas | entre si e CSV / XLSX / JSON;<br>dados projetados (UTM, Web Mercator, Lambert, Albers) saem como longitude / latitude em WGS 84 |

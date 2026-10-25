@@ -161,7 +161,7 @@ Pour annuler, supprimez ces entrées dans Sécurité Windows → Contrôle des a
 | **Sous-titres** : SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | entre eux, en UTF-8 (les fichiers coréens en CP949 sont lus correctement) |
 | **Archives** : ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | extraire, ZIP, 7Z, TAR, TAR.GZ ;<br>n'importe quels fichiers → un seul ZIP |
 | **CAO** : DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **Polices** : TTF, OTF, WOFF, WOFF2, EOT | entre elles |
+| **Polices** : TTF, OTF, WOFF, WOFF2, EOT ; FON (NE, FNT v2/v3 monochrome et jeux de caractères mono-octet pris en charge, entrée seule) | conversion entre les cinq formats, un fichier par taille (sans suffixe pour une seule ressource). PE, polices vectorielles et FNT autonome exclus |
 | **Données** : JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | entre eux, CSV et XLSX (tableaux) ;<br>vCard, iCalendar ↔ CSV |
 | **Modèles 3D** : GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY ;<br>FBX en lecture | entre eux, aperçu PNG |
 | **Données géospatiales vectorielles** : Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV avec coordonnées | entre eux et CSV / XLSX / JSON ;<br>les données projetées (UTM, Web Mercator, Lambert, Albers) sortent en longitude / latitude WGS 84 |

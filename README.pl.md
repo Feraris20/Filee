@@ -161,7 +161,7 @@ Aby to cofnąć, usuń te wpisy w Zabezpieczenia Windows → Kontrola aplikacji 
 | **Napisy**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | między sobą, w UTF-8 (koreańskie pliki CP949 są odczytywane poprawnie) |
 | **Archiwa**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | rozpakowanie, ZIP, 7Z, TAR, TAR.GZ;<br>dowolne pliki → jeden ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **Czcionki**: TTF, OTF, WOFF, WOFF2, EOT | między sobą |
+| **Czcionki**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE, monochromatyczny FNT v2/v3 i obsługiwane zestawy jednobajtowe; tylko wejście) | konwersja między pięcioma formatami, plik na rozmiar (bez sufiksu przy jednym zasobie). Bez PE, fontów wektorowych i samodzielnego FNT |
 | **Dane**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | między sobą, CSV i XLSX (tabele);<br>vCard, iCalendar ↔ CSV |
 | **Modele 3D**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>FBX tylko odczyt | między sobą, podgląd PNG |
 | **Dane geoprzestrzenne (wektorowe)**: Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV ze współrzędnymi | między sobą oraz CSV / XLSX / JSON;<br>dane w odwzorowaniach (UTM, Web Mercator, Lambert, Albers) wychodzą jako długość / szerokość geograficzna WGS 84 |

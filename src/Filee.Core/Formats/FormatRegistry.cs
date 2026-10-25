@@ -304,6 +304,7 @@ public static class FormatRegistry
         new("woff", "WOFF", FormatCategory.Font, ["woff"]),
         new("woff2", "WOFF2", FormatCategory.Font, ["woff2"]),
         new("eot", "EOT", FormatCategory.Font, ["eot"]),
+        new("fon", "FON", FormatCategory.Font, ["fon"], Writable: false),
 
         // Subtitles (text)
         new("srt", "SRT", FormatCategory.Subtitle, ["srt"]),

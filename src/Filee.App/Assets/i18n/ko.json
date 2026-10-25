@@ -171,7 +171,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "macOS 앱 아이콘(ICNS)을 이미지로, 이미지를 ICNS로.",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "글꼴: TTF, OTF, WOFF, WOFF2, EOT를 서로 변환해요.",
+  "engine.font.description": "TTF, OTF, WOFF, WOFF2, EOT를 서로 변환해요. FON은 NE·단색·단일 바이트 입력만 읽어요.",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "오토캐드 도면: DWG ↔ DXF, 그리고 둘 다 PDF, SVG, PNG로.",
   "engine.model3d.name": "3D models (built-in)",

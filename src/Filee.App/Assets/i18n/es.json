@@ -164,7 +164,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "Iconos de apps de macOS (ICNS) desde y hacia imágenes.",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "Tipografías: TTF, OTF, WOFF, WOFF2 y EOT entre sí.",
+  "engine.font.description": "Convierte entre TTF, OTF, WOFF, WOFF2 y EOT; FON solo de entrada (NE, monocromo, un byte).",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "Planos de AutoCAD: DWG ↔ DXF, y ambos a PDF, SVG y PNG.",
   "engine.model3d.name": "3D models (built-in)",

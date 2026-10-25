@@ -164,7 +164,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "تحويل أيقونات تطبيقات macOS ‏(ICNS) من الصور وإليها.",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "التحويل بين الخطوط: TTF وOTF وWOFF وWOFF2 وEOT.",
+  "engine.font.description": "التحويل بين TTF وOTF وWOFF وWOFF2 وEOT؛ قراءة FON بنمط NE أحادي اللون وبترميز أحادي البايت فقط.",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "رسومات AutoCAD: التحويل بين DWG وDXF، وتحويل كليهما إلى PDF وSVG وPNG.",
   "engine.model3d.name": "3D models (built-in)",

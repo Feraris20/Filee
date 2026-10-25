@@ -161,7 +161,7 @@ Set-ProcessMitigation -Name filee-cli.exe -Disable UserShadowStack
 | **Субтитры**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | друг в друга, в UTF-8 (корейские файлы в CP949 читаются правильно) |
 | **Архивы**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | распаковка, ZIP, 7Z, TAR, TAR.GZ;<br>любые файлы → один ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **Шрифты**: TTF, OTF, WOFF, WOFF2, EOT | друг в друга |
+| **Шрифты**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE, монохромный FNT v2/v3 и поддерживаемые однобайтовые кодировки; только ввод) | взаимное преобразование пяти форматов, файл на размер (без суффикса для одного ресурса). PE, векторные и отдельные FNT не поддерживаются |
 | **Данные**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | друг в друга, CSV и XLSX (таблицы);<br>vCard, iCalendar ↔ CSV |
 | **3D-модели**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>FBX только чтение | друг в друга, превью в PNG |
 | **Геоданные (векторные)**: Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV с координатами | друг в друга и CSV / XLSX / JSON;<br>данные в проекциях (UTM, Web Mercator, Ламберта, Альберса) переводятся в долготу / широту WGS 84 |

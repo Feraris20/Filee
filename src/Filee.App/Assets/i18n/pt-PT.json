@@ -171,7 +171,7 @@
   "engine.icns.name": "ICNS (motor integrado)",
   "engine.icns.description": "Ícones de aplicações macOS (ICNS) para imagens e vice-versa.",
   "engine.font.name": "Tipos de letra (motor integrado)",
-  "engine.font.description": "Converte tipos de letra entre TTF, OTF, WOFF, WOFF2 e EOT.",
+  "engine.font.description": "Converte tipos de letra entre TTF, OTF, WOFF, WOFF2 e EOT; FON apenas como entrada (NE, monocromático, um byte).",
   "engine.cad.name": "CAD (motor integrado)",
   "engine.cad.description": "Desenhos AutoCAD: DWG ↔ DXF e ambos para PDF, SVG e PNG.",
   "engine.model3d.name": "Modelos 3D (motor integrado)",

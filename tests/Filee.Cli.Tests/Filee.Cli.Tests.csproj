@@ -18,4 +18,8 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Filee.Engines.Tests\Fonts\Fon-*.fon" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

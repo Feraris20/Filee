@@ -164,7 +164,7 @@ Set-ProcessMitigation -Name filee-cli.exe -Disable UserShadowStack
 | **字幕**：SRT、ASS/SSA、WebVTT、SAMI（SMI）、LRC、TTML、MicroDVD、SCC | 相互変換、UTF-8で保存（CP949の韓国語ファイルも正しく読み込み） |
 | **アーカイブ**：ZIP、ANSYS Workbench（WBPZ）、7Z、RAR、TAR、TAR.GZ、TAR.BZ2、TAR.XZ、GZ、ISO、CAB、DMG、ALZ、EGG など | 展開、ZIP、7Z、TAR、TAR.GZ。<br>複数のファイル → 1つのZIP |
 | **CAD**：DWG、DXF | PDF、SVG、PNG、DWG ↔ DXF |
-| **フォント**：TTF、OTF、WOFF、WOFF2、EOT | 相互変換 |
+| **フォント**：TTF、OTF、WOFF、WOFF2、EOT；FON（NE・単色 FNT v2/v3・対応する1バイト文字セット、入力専用） | 5形式間の変換、サイズごとに1ファイル（単一リソースはサイズ接尾辞なし）。PE・ベクター・単独FNTは対象外 |
 | **データ**：JSON、JSON Lines、YAML、TOML、XML<br>vCard、iCalendar | 相互変換、CSVとXLSX（表形式のデータ）。<br>vCard、iCalendar ↔ CSV |
 | **3Dモデル**：GLB、glTF、STL、OBJ（+ MTL）、3MF、PLY。<br>FBXは読み込みのみ | 相互変換、PNGプレビュー |
 | **地理空間ベクターデータ**：Shapefile、GeoJSON、KML、KMZ、GPX<br>座標付きのCSV | 相互変換、CSV/XLSX/JSON。<br>投影座標系（UTM、Webメルカトル、ランベルト、アルベルス）のデータはWGS 84の経度/緯度で出力 |

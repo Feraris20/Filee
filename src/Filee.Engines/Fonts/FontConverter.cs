@@ -13,15 +13,22 @@ public sealed class FontConverter : IConverter
     public string DisplayName => "Fonts (built-in)";
     public int MaxParallelism => 0;
 
-    /// <summary>Every format to every other one, directly.</summary>
+    /// <summary>Every format to every other one, directly, plus read-only Windows bitmap FON to each of them.</summary>
     public IReadOnlyList<ConversionEdge> Edges { get; } =
-        [.. from source in FontFile.Formats from target in FontFile.Formats where source != target select new ConversionEdge(source, target)];
+    [
+        .. from source in FontFile.Formats from target in FontFile.Formats where source != target select new ConversionEdge(source, target),
+        .. FontFile.Formats.Select(target => new ConversionEdge("fon", target)),
+    ];
 
-    public EngineStatus GetStatus() => EngineStatus.Available("TTF, OTF, WOFF, WOFF2, EOT", EngineVersions.BuiltIn);
+    public EngineStatus GetStatus() => EngineStatus.Available(
+        "TTF, OTF, WOFF, WOFF2, EOT; FON input only (NE, monochrome FNT v2/v3, supported single-byte charsets; no PE or vector fonts)",
+        EngineVersions.BuiltIn);
 
     public Task<IReadOnlyList<string>> ConvertAsync(ConversionStep step, IProgress<double>? progress, CancellationToken cancellationToken) =>
         Task.Run<IReadOnlyList<string>>(() =>
         {
+            if (step.From == "fon")
+                return ConvertFon(step, progress, cancellationToken);
             var font = FontFile.Load(File.ReadAllBytes(step.InputPath), cancellationToken);
             progress?.Report(0.2);
             var outlines = progress is null ? null : new SubProgress(progress, 0.2, 0.6);
@@ -35,6 +42,45 @@ public sealed class FontConverter : IConverter
             progress?.Report(1);
             return [output];
         }, cancellationToken);
+
+    /// <summary>
+    /// One output per RT_FONT resource. Every resource is parsed and every output is built in memory before the first
+    /// path is allocated, so a failure or cancellation before writing leaves no new file and no existing file changed.
+    /// </summary>
+    private static IReadOnlyList<string> ConvertFon(ConversionStep step, IProgress<double>? progress, CancellationToken cancellationToken)
+    {
+        var strikes = FonReader.Read(File.ReadAllBytes(step.InputPath));
+        cancellationToken.ThrowIfCancellationRequested();
+        progress?.Report(0.1);
+
+        // Same-height ordinals and the resource count are fixed now, so skipped outputs never rename the others.
+        var ordinals = new int[strikes.Count];
+        for (var i = 0; i < strikes.Count; i++)
+            ordinals[i] = strikes.Take(i + 1).Count(s => s.PixelHeight == strikes[i].PixelHeight);
+
+        var results = new byte[strikes.Count][];
+        for (var i = 0; i < strikes.Count; i++)
+        {
+            var font = FonOutlineBuilder.Build(strikes[i], strikes.Count, ordinals[i]);
+            results[i] = FontFile.Save(font, step.To, cancellationToken);
+            progress?.Report(i == 0 ? 0.85 : 0.85 + 0.05 * i / strikes.Count);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var outputs = new List<string>();
+        for (var i = 0; i < strikes.Count; i++)
+        {
+            var suffix = strikes.Count == 1 ? null
+                : $"-{strikes[i].PixelHeight}px{(ordinals[i] > 1 ? $"-{ordinals[i]}" : "")}";
+            if (step.Output.Allocate(step.To, suffix) is not { } output)
+                continue;
+            File.WriteAllBytes(output, results[i]);
+            outputs.Add(output);
+        }
+        progress?.Report(1);
+        return outputs;
+    }
 
     /// <summary>Maps 0–1 progress of one phase onto a slice of the step's progress, synchronously.</summary>
     private sealed class SubProgress(IProgress<double> parent, double start, double length) : IProgress<double>

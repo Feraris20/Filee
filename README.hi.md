@@ -161,7 +161,7 @@ Set-ProcessMitigation -Name filee-cli.exe -Disable UserShadowStack
 | **सबटाइटल**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | आपस में, UTF-8 में (कोरियाई CP949 फ़ाइलें भी सही पढ़ी जाती हैं) |
 | **आर्काइव**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | निकालना, ZIP, 7Z, TAR, TAR.GZ;<br>कोई भी फ़ाइलें → एक ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **फ़ॉन्ट**: TTF, OTF, WOFF, WOFF2, EOT | आपस में |
+| **फ़ॉन्ट**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE मोनोक्रोम FNT v2/v3 और समर्थित एक-बाइट वर्णसेट; केवल इनपुट) | पाँच प्रारूपों में रूपांतरण, हर आकार की अलग फ़ाइल (एक संसाधन पर आकार प्रत्यय नहीं)। PE, वेक्टर और अलग FNT असमर्थित |
 | **डेटा**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | आपस में, CSV और XLSX (टेबल);<br>vCard, iCalendar ↔ CSV |
 | **3D मॉडल**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>FBX सिर्फ़ पढ़ने के लिए | आपस में, PNG प्रीव्यू |
 | **भू-स्थानिक वेक्टर**: Shapefile, GeoJSON, KML, KMZ, GPX<br>निर्देशांक वाली CSV | आपस में और CSV / XLSX / JSON;<br>प्रोजेक्टेड डेटा (UTM, Web Mercator, Lambert, Albers) WGS 84 देशांतर / अक्षांश में बदलकर आता है |

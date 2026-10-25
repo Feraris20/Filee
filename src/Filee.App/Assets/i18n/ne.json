@@ -164,7 +164,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "छविहरूबाट र छविहरूमा macOS एप आइकन (ICNS)।",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "TTF, OTF, WOFF, WOFF2 फन्टहरू एकअर्कामा रूपान्तरण गर्दछ।",
+  "engine.font.description": "TTF, OTF, WOFF, WOFF2 र EOT बीच रूपान्तरण; FON इनपुट मात्र (NE, एकरङ्गी, एक-बाइट)।",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "AutoCAD रेखाचित्रहरू: DWG ↔ DXF, र दुवैबाट PDF, SVG र PNG।",
   "engine.model3d.name": "3D models (built-in)",

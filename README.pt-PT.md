@@ -161,7 +161,7 @@ Para reverter a alteração, remove as entradas em Segurança do Windows → Con
 | **Legendas**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | conversão entre estes formatos em UTF-8 (leitura correta de ficheiros coreanos em CP949) |
 | **Arquivos**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | extrair, ZIP, 7Z, TAR, TAR.GZ;<br>quaisquer ficheiros → um ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **Tipos de letra**: TTF, OTF, WOFF, WOFF2, EOT | conversão entre estes formatos |
+| **Tipos de letra**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE, FNT v2/v3 monocromático e conjuntos de um byte compatíveis; apenas entrada) | conversão entre os cinco formatos, um ficheiro por tamanho (sem sufixo com um recurso). PE, tipos de letra vetoriais e FNT avulso não são aceites |
 | **Dados**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | conversão entre estes formatos, CSV e XLSX (tabelas);<br>vCard, iCalendar ↔ CSV |
 | **Modelos 3D**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>leitura de FBX | conversão entre estes formatos, pré-visualização em PNG |
 | **Vetores geoespaciais**: Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV com coordenadas | conversão entre estes formatos e CSV / XLSX / JSON;<br>os dados projetados (UTM, Web Mercator, Lambert, Albers) são convertidos em longitude / latitude WGS 84 |

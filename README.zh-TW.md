@@ -161,7 +161,7 @@ Set-ProcessMitigation -Name filee-cli.exe -Disable UserShadowStack
 | **字幕** SRT、ASS/SSA、WebVTT、SAMI（SMI）、LRC、TTML、MicroDVD、SCC | 互相轉換，儲存為 UTF-8（也能讀取 CP949 韓文字幕） |
 | **壓縮檔** ZIP、ANSYS Workbench（WBPZ）、7Z、RAR、TAR、TAR.GZ、TAR.BZ2、TAR.XZ、GZ、ISO、CAB、DMG、ALZ、EGG 等 | 解壓縮、ZIP、7Z、TAR、TAR.GZ，<br>多個檔案 → 一個 ZIP |
 | **CAD** DWG、DXF | PDF、SVG、PNG、DWG ↔ DXF |
-| **字型** TTF、OTF、WOFF、WOFF2、EOT | 互相轉換 |
+| **字型** TTF、OTF、WOFF、WOFF2、EOT；FON（NE、單色 FNT v2/v3、支援的單位元組字元集，僅輸入） | 五種格式相互轉換，每個尺寸輸出一個檔案（單一資源不加尺寸後綴）；不支援 PE、向量或獨立 FNT |
 | **資料** JSON、JSON Lines、YAML、TOML、XML<br>vCard、iCalendar | 互相轉換、CSV 和 XLSX（表格資料）、<br>vCard、iCalendar ↔ CSV |
 | **3D 模型** GLB、glTF、STL、OBJ（+ MTL）、3MF、PLY，<br>FBX 僅讀取 | 互相轉換、PNG 預覽 |
 | **地理資訊（向量）** Shapefile、GeoJSON、KML、KMZ、GPX<br>帶座標的 CSV | 互相轉換、CSV / XLSX / JSON，<br>投影座標系統（UTM、Web 麥卡托、蘭伯特、阿爾伯斯）會轉換為 WGS 84 經緯度 |
