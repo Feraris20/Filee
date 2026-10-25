@@ -2,6 +2,7 @@
 
 using System.Text.Json;
 using Filee.Core.Presets;
+using Filee.Engines.Tests;
 
 namespace Filee.Cli.Tests;
 
@@ -374,19 +375,17 @@ public sealed class CliTests : IDisposable
         Assert.True(File.Exists(source));
     }
 
-    // ──────────── Windows bitmap fonts (#177): the engine tests' committed samples, linked into this project ────────────
+    // ──────────── Windows bitmap fonts (#177): in-memory samples shared with the engine tests ────────────
 
     private static readonly string[] FontFormats = ["ttf", "otf", "woff", "woff2", "eot"];
 
-    private static string FonSample(string name) => Path.Combine(AppContext.BaseDirectory, "Fonts", name);
-
-    /// <summary>Copies a committed sample to <c>Name.fon</c> in this test's folder (or a sub folder of it).</summary>
+    /// <summary>Writes a synthetic sample to <c>Name.fon</c> in this test's folder (or a subfolder).</summary>
     private string Fon(string sample, string? folder = null)
     {
         folder = Path.Combine(_folder, folder ?? "");
         Directory.CreateDirectory(folder);
         var path = Path.Combine(folder, "Name.fon");
-        File.Copy(FonSample(sample), path);
+        File.WriteAllBytes(path, FonBuilder.Sample(sample));
         return path;
     }
 
@@ -397,11 +396,11 @@ public sealed class CliTests : IDisposable
     }
 
     [Fact]
-    public void Committed_fon_samples_are_copied_to_cli_output()
+    public void Generated_fon_samples_are_written_to_cli_input()
     {
         foreach (var sample in new[] { "Fon-v2-fixed.fon", "Fon-multi.fon" })
         {
-            var bytes = File.ReadAllBytes(FonSample(sample));
+            var bytes = FonBuilder.Sample(sample);
             Assert.Equal("MZ"u8.ToArray(), bytes[..2]);
             Assert.Equal(bytes, File.ReadAllBytes(Fon(sample, Path.GetFileNameWithoutExtension(sample))));
         }

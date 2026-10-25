@@ -501,8 +501,8 @@ extension, and the file must then have an NE header with FNT resources.
 `tests/Filee.Engines.Tests/FontTests.cs` checks every conversion with small OFL fonts in
 `tests/Filee.Engines.Tests/Fonts` (see `OFL.txt` there): round trips keep every table byte for byte, a WOFF2 made
 by Google's encoder decodes to the source font, and converted CFF glyphs are compared with the originals in Skia.
-`tests/Filee.Engines.Tests/FonTests.cs` converts the synthetic `Fon-*.fon` samples that `make-test-fon.py` draws
-from pixel art (see `FON-FIXTURES.md`) and compares every rendered glyph with its source bitmap.
+`tests/Filee.Engines.Tests/FonTests.cs` builds synthetic FON samples in code (`FonBuilder`) and compares every
+rendered glyph with its source bitmap.
 
 ## DOCX writer
 

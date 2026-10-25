@@ -20,6 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Filee.Engines.Tests\Fonts\Fon-*.fon" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="..\Filee.Engines.Tests\FonBuilder.cs" Link="FonBuilder.cs" />
   </ItemGroup>
 </Project>

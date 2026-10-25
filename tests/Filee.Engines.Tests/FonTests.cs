@@ -1,6 +1,5 @@
-// Windows bitmap FON (NE + FNT v2/v3) to TTF/OTF/WOFF/WOFF2/EOT (issue #177). The committed Fonts/Fon-*.fon files are
-// synthetic, made by Fonts/make-test-fon.py; the expected pixels below are written from that generator's art, never
-// from the engine's own reader.
+// Windows bitmap FON (NE + FNT v2/v3) to TTF/OTF/WOFF/WOFF2/EOT (issue #177). FonBuilder creates
+// synthetic samples in memory; the expected pixels below are independent of the engine's reader.
 
 using System.Buffers.Binary;
 using System.Globalization;
@@ -17,9 +16,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
 {
     private static readonly string[] Formats = ["ttf", "otf", "woff", "woff2", "eot"];
 
-    private static string Sample(string name) => Path.Combine(AppContext.BaseDirectory, "Fonts", name);
-
-    private static byte[] Data(string name) => File.ReadAllBytes(Sample(name));
+    private static byte[] Data(string name) => FonBuilder.Sample(name);
 
     private static int FntStart(byte[] data, int resource = 0)
     {
@@ -31,7 +28,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
 
     // ───────────────────────── The generator's art, independent of the reader ─────────────────────────
 
-    /// <summary>One committed single-resource sample: FNT version, fixed or proportional, first character.</summary>
+    /// <summary>One synthetic single-resource sample: FNT version, fixed or proportional, first character.</summary>
     public sealed record Kind(string File, bool Fixed, int First);
 
     private static readonly Kind[] Kinds =
@@ -70,7 +67,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [InlineData("Fon-v3-proportional.fon", 0x300, 0)]
     [InlineData("Fon-multi.fon", 0x200, 8)]
     [InlineData("Fon-edge.fon", 0x300, 8)]
-    public void Committed_fon_samples_are_copied_to_test_output(string name, int version, int width)
+    public void Generated_fon_samples_have_expected_resources(string name, int version, int width)
     {
         var bytes = Data(name);
         Assert.Equal("MZ", Encoding.ASCII.GetString(bytes, 0, 2));
@@ -79,6 +76,23 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Equal(version, strikes[0].Version);
         Assert.Equal(width, strikes[0].PixelWidth);
         Assert.Equal("Fixed", strikes[0].Face);
+    }
+
+    [Fact]
+    public void Aligned_ne_container_keeps_resource_lengths_inside_file()
+    {
+        var sample = FonBuilder.V2Fixed();
+        var bytes = FonBuilder.Container([Resource(sample, 0)], alignmentShift: 9);
+        // FONTDIR (first entry at 0x8A) and RT_FONT (0x9E) both resolve inside the file in 512-byte units.
+        foreach (var entry in new[] { 0x80 + 10, 0x80 + 30 })
+        {
+            var offset = BitConverter.ToUInt16(bytes, entry) << 9;
+            var length = BitConverter.ToUInt16(bytes, entry + 2) << 9;
+            Assert.InRange(offset, 0x100, bytes.Length - length);
+        }
+        var strike = Assert.Single(FonReader.Read(bytes, TestContext.Current.CancellationToken));
+        Assert.Equal(0x200, strike.Version);
+        Assert.Equal(13, strike.PixelHeight);
     }
 
     /// <summary>A folder holding <paramref name="data"/> as <c>Name.fon</c>.</summary>
@@ -308,7 +322,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Fact]
     public void Cmap_excludes_controls_and_undefined_bytes_without_losing_glyphs()
     {
-        // 0x00..0x7F from the committed sample: controls 0x00..0x1F and DEL 0x7F keep glyphs but no cmap entry.
+        // 0x00..0x7F from the generated sample: controls 0x00..0x1F and DEL 0x7F keep glyphs but no cmap entry.
         var strike = Assert.Single(FonReader.Read(Data("Fon-v2-proportional.fon"), TestContext.Current.CancellationToken));
         var font = FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken);
         var glyphs = GlyfTable.ReadAll(font);
@@ -697,7 +711,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         return fon[start..(start + BinaryPrimitives.ReadUInt16LittleEndian(fon.AsSpan(entry + 2)))];
     }
 
-    /// <summary>MZ/NE with a FONTDIR and the given RT_FONT resources (the layout of make-test-fon.py).</summary>
+    /// <summary>MZ/NE with a FONTDIR and the given RT_FONT resources.</summary>
     private static byte[] Container(params byte[][] resources)
     {
         const int ne = 0x40, table = ne + 0x40;
