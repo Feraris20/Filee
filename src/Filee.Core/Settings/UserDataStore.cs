@@ -872,6 +872,10 @@ internal static class SettingsMigrations
                 changed = true;
             }
         }
+        // v47: Windows bitmap fonts (.fon) learn the fonts donut; custom claims stay put. (#530 takes 47 for .fit too;
+        //      while 47 is unreleased both belong in this one step.)
+        if (from < 47)
+            changed |= LearnExtensions(profiles, out _, ["fon"]);
         return changed;
     }
 
