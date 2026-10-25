@@ -39,7 +39,7 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
             switch (format)
             {
                 case "iso":
-                    await Task.Run(() => WriteIso(items, temp, progress, cancellationToken), cancellationToken);
+                    await Task.Run(() => WriteIso(items, temp, outputPath, progress, cancellationToken), cancellationToken);
                     break;
                 case "zip":
                     await Task.Run(() => WriteZip(items, temp, level, progress, cancellationToken), cancellationToken);
@@ -88,12 +88,15 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
         }
     }
 
-    private static void WriteIso(IReadOnlyList<PackItem> items, string path, IProgress<double>? progress, CancellationToken cancellationToken)
+    private static void WriteIso(IReadOnlyList<PackItem> items, string path, string destination, IProgress<double>? progress, CancellationToken cancellationToken)
     {
         var builder = new CDBuilder { UseJoliet = true, VolumeIdentifier = "FILEE" };
         foreach (var file in Expand(items))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            // A custom output location may be inside the source tree. Never include the previous image itself.
+            if (Filee.Core.Platform.FileSystemPaths.Comparer.Equals(Path.GetFullPath(file.Path), Path.GetFullPath(destination)))
+                continue;
             // Joliet stores at most 64 UTF-16 characters per name. Reject rather than silently truncate names.
             if (file.EntryName.Split('/').Any(part => part.Length > 64 || part.Contains(';')))
                 throw new NotSupportedException($"ISO (Joliet) cannot preserve the name '{file.EntryName}': names must be at most 64 characters and contain no semicolons.");
