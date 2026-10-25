@@ -91,7 +91,8 @@ internal static class FonOutlineBuilder
         var baseName = resourceCount == 1 ? strike.Face :
             $"{strike.Face} {height}px{(sameHeightOrdinal > 1 ? $"-{sameHeightOrdinal}" : "")}";
         var family = weight is 400 or 700 ? baseName : $"{baseName} Weight{weight}";
-        var style = (bold, strike.Italic) switch
+        var nameBold = weight == 700;
+        var style = (nameBold, strike.Italic) switch
         {
             (true, true) => "Bold Italic",
             (true, false) => "Bold",

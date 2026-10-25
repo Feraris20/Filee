@@ -620,6 +620,33 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Equal(3, names.Select(n => n.Item3).Distinct().Count());
     }
 
+    [Fact]
+    public async Task Multi_resource_same_height_styles_have_style_names_and_ordinals()
+    {
+        var source = Source(FonBuilder.MixedStyles(), out var folder);
+        var job = await fx.ConvertAsync([source], PresetFor("ttf"));
+        Assert.True(job.State == JobState.Completed, string.Join("; ", job.Files.Select(f => $"{f.ErrorKey} {f.ErrorDetail}")));
+        var expected = new[]
+        {
+            ("Name-13px.ttf", "Name 13px", "Regular"),
+            ("Name-13px-Bold.ttf", "Name 13px", "Bold"),
+            ("Name-13px-Italic.ttf", "Name 13px", "Italic"),
+            ("Name-13px-BoldItalic.ttf", "Name 13px", "Bold Italic"),
+            ("Name-13px-Weight600.ttf", "Name 13px Weight600", "Regular"),
+            ("Name-13px-Weight600Italic.ttf", "Name 13px Weight600", "Italic"),
+            ("Name-13px-2.ttf", "Name 13px-2", "Regular"),
+            ("Name-13px-Bold-2.ttf", "Name 13px-2", "Bold"),
+            ("Name-14px.ttf", "Name 14px", "Regular"),
+        };
+        Assert.Equal(expected.Select(e => Path.Combine(folder, e.Item1)), job.Outputs);
+        foreach (var (file, family, style) in expected)
+        {
+            var font = FontFile.Load(File.ReadAllBytes(Path.Combine(folder, file)), TestContext.Current.CancellationToken);
+            Assert.Equal(family, Name(font, 1));
+            Assert.Equal(style, Name(font, 2));
+        }
+    }
+
     /// <summary>Hands out <c>Name{suffix}.{ext}</c> paths in a folder and records each request.</summary>
     private sealed class RecordingAllocator(string folder) : IOutputAllocator
     {
@@ -649,10 +676,10 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var outputs = await new FontConverter().ConvertAsync(
             new ConversionStep(source, "fon", "ttf", PresetFor("ttf"), allocator, fx.NewFolder()), null, TestContext.Current.CancellationToken);
 
-        Assert.Equal(["-13px", "-13px-2", "-14px"], allocator.Suffixes);
+        Assert.Equal(["-13px", "-13px-BoldItalic", "-14px"], allocator.Suffixes);
         Assert.Equal(3, outputs.Count);
         var fonts = outputs.Select(o => FontFile.Load(File.ReadAllBytes(o))).ToArray();
-        Assert.Equal(["Fixed 13px", "Fixed 13px-2", "Fixed 14px"], fonts.Select(f => Name(f, 1)));
+        Assert.Equal(["Fixed 13px", "Fixed 13px", "Fixed 14px"], fonts.Select(f => Name(f, 1)));
         Assert.Equal(["Regular", "Bold Italic", "Regular"], fonts.Select(f => Name(f, 2)));
         Assert.Equal(3, outputs.Select(o => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(o)))).Distinct().Count());
         Assert.Equal(fonts[0].Require("glyf"), fonts[1].Require("glyf")); // same pixels, still two fonts

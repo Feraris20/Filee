@@ -486,8 +486,9 @@ extension, and the file must then have an NE header with FNT resources.
   executable and turns each lit pixel into a straight, grid-aligned TrueType outline. The result retains the
   original pixel shape, per-glyph advance, ascent and baseline; there is no smoothing or curve tracing. A FON with a
   single font resource produces `Name.ttf` (or the corresponding OTF/WOFF/WOFF2/EOT extension). Several resources
-  produce one file per strike, such as `Name-13px.ttf`, `Name-13px-2.ttf` and `Name-14px.ttf`; the font family names
-  also distinguish the sizes and repeated heights. Existing output files follow the usual Skip, Rename and Overwrite
+  produce one file per strike, such as `Name-13px.ttf`, `Name-13px-Bold.ttf`, `Name-13px-2.ttf` and
+  `Name-14px.ttf`; the font family names distinguish heights, group different styles at the same height, and number
+  only repeated styles at the same height. Existing output files follow the usual Skip, Rename and Overwrite
   policies independently for each strike. Invalid resources fail the whole input before output files are allocated.
   Character mapping uses the Windows single-byte code page indicated by the resource charset, not the computer's
   locale. Undefined bytes (including those that Windows decodes to Private Use code points in the Greek, Hebrew,

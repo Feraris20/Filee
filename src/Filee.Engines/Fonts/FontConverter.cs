@@ -53,14 +53,15 @@ public sealed class FontConverter : IConverter
         cancellationToken.ThrowIfCancellationRequested();
         progress?.Report(0.1);
 
-        // Same-height ordinals and the resource count are fixed now, so skipped outputs never rename the others.
+        // Same-height, same-style ordinals and the resource count are fixed now, so skipped outputs never rename the others.
         var ordinals = new int[strikes.Count];
-        var counts = new Dictionary<int, int>();
+        var counts = new Dictionary<(int Height, int Weight, bool Italic), int>();
         for (var i = 0; i < strikes.Count; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var height = strikes[i].PixelHeight;
-            ordinals[i] = counts[height] = counts.GetValueOrDefault(height) + 1;
+            var strike = strikes[i];
+            var key = (strike.PixelHeight, strike.Weight, strike.Italic);
+            ordinals[i] = counts[key] = counts.GetValueOrDefault(key) + 1;
         }
 
         var results = new byte[strikes.Count][];
@@ -76,8 +77,18 @@ public sealed class FontConverter : IConverter
         var outputs = new List<string>();
         for (var i = 0; i < strikes.Count; i++)
         {
+            var strike = strikes[i];
+            var style = (strike.Weight, strike.Italic) switch
+            {
+                (400, false) => "",
+                (700, false) => "-Bold",
+                (400, true) => "-Italic",
+                (700, true) => "-BoldItalic",
+                (_, false) => $"-Weight{strike.Weight}",
+                (_, true) => $"-Weight{strike.Weight}Italic",
+            };
             var suffix = strikes.Count == 1 ? null
-                : $"-{strikes[i].PixelHeight}px{(ordinals[i] > 1 ? $"-{ordinals[i]}" : "")}";
+                : $"-{strike.PixelHeight}px{style}{(ordinals[i] > 1 ? $"-{ordinals[i]}" : "")}";
             if (step.Output.Allocate(step.To, suffix) is not { } output)
                 continue;
             File.WriteAllBytes(output, results[i]);

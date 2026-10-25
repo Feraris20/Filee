@@ -19,7 +19,7 @@ internal static class FonBuilder
     }
 
     private static byte[] Fnt(int version, int height = 13, bool fixedWidth = true, int first = 32,
-        int last = 127, int? flags = null)
+        int last = 127, int? flags = null, int weight = 400, bool italic = false, string faceName = "Fixed")
     {
         var count = last - first + 1;
         var entrySize = version == 2 ? 4 : flags is null ? 6 : 8 + (BitOperations.Log2((uint)flags.Value) - 2) * 2;
@@ -31,7 +31,8 @@ internal static class FonBuilder
         Put(data, 0x42, (ushort)0);
         Put(data, 0x4A, (ushort)Math.Min(height, 10));
         Put(data, 0x4E, (ushort)2);
-        Put(data, 0x53, (ushort)400);
+        Put(data, 0x53, (ushort)weight);
+        data[0x50] = italic ? (byte)1 : (byte)0;
         data[0x55] = 0;
         Put(data, 0x56, (ushort)(fixedWidth ? 8 : 0));
         Put(data, 0x58, (ushort)height);
@@ -51,7 +52,7 @@ internal static class FonBuilder
             }
         }
         for (var i = 0; i < 6; i++)
-            data[face + i] = "Fixed\0"u8[i];
+            data[face + i] = i < faceName.Length ? (byte)faceName[i] : (byte)0;
 
         for (var index = 0; index < count; index++)
         {
@@ -158,6 +159,13 @@ internal static class FonBuilder
     public static byte[] V3Proportional() => Container([Fnt(3, fixedWidth: false)]);
     /// <summary>Builds three strikes, two at the same height.</summary>
     public static byte[] Multi() => Container([Fnt(2), Fnt(3), Fnt(3, 14)]);
+    /// <summary>Builds mixed styles and duplicate style strikes at two heights.</summary>
+    public static byte[] MixedStyles() => Container([
+        Fnt(3, faceName: "Name"), Fnt(3, weight: 700, faceName: "Name"), Fnt(3, italic: true, faceName: "Name"),
+        Fnt(3, weight: 700, italic: true, faceName: "Name"), Fnt(3, weight: 600, faceName: "Name"),
+        Fnt(3, weight: 600, italic: true, faceName: "Name"), Fnt(3, faceName: "Name"),
+        Fnt(3, weight: 700, faceName: "Name"), Fnt(3, 14, faceName: "Name")
+    ]);
     /// <summary>Builds the one- and 256-pixel strikes.</summary>
     public static byte[] Edge() => Container([Fnt(3, 1, first: 32, last: 34), Fnt(3, 256, first: 32, last: 34)]);
     /// <summary>Builds a v3 resource with the given unsupported glyph table flags.</summary>
