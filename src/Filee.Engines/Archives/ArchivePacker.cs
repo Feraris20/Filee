@@ -5,6 +5,7 @@
 using System.Formats.Tar;
 using System.IO.Compression;
 using System.Text;
+using DiscUtils.Iso9660;
 using Filee.Core.Presets;
 using Filee.Engines.Infrastructure;
 
@@ -37,6 +38,9 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
         {
             switch (format)
             {
+                case "iso":
+                    await Task.Run(() => WriteIso(items, temp, progress, cancellationToken), cancellationToken);
+                    break;
                 case "zip":
                     await Task.Run(() => WriteZip(items, temp, level, progress, cancellationToken), cancellationToken);
                     break;
@@ -75,12 +79,38 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
                 default:
                     throw new NotSupportedException($"Filee cannot write {format} archives.");
             }
+            cancellationToken.ThrowIfCancellationRequested();
             File.Move(temp, outputPath, overwrite: true);
         }
         finally
         {
             ArchiveFiles.TryDeleteFile(temp);
         }
+    }
+
+    private static void WriteIso(IReadOnlyList<PackItem> items, string path, IProgress<double>? progress, CancellationToken cancellationToken)
+    {
+        var builder = new CDBuilder { UseJoliet = true, VolumeIdentifier = "FILEE" };
+        foreach (var file in Expand(items))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            // Joliet stores at most 64 UTF-16 characters per name. Reject rather than silently truncate names.
+            if (file.EntryName.Split('/').Any(part => part.Length > 64 || part.Contains(';')))
+                throw new NotSupportedException($"ISO (Joliet) cannot preserve the name '{file.EntryName}': names must be at most 64 characters and contain no semicolons.");
+            if (file.Length > uint.MaxValue)
+                throw new NotSupportedException($"ISO cannot store '{file.EntryName}': an individual file must be smaller than 4 GiB.");
+            var name = file.EntryName.Replace('/', '\\');
+            if (file.IsFolder)
+                builder.AddDirectory(name).CreationTime = file.Modified.UtcDateTime;
+            else
+                builder.AddFile(name, file.Path).CreationTime = file.Modified.UtcDateTime;
+        }
+
+        // Stream the image so memory use stays bounded and cancellation works during large copies.
+        using var image = builder.Build();
+        using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1 << 16);
+        var counter = new ByteCounter(image.Length, progress);
+        ArchiveFiles.CopyLimited(image, output, image.Length, cancellationToken, counter.Add);
     }
 
     private async Task RunSevenZipAsync(string type, IReadOnlyList<string> paths, string archive, ArchiveLevel level,

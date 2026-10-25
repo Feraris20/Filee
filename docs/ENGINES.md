@@ -1280,6 +1280,12 @@ bundled with the installer), never a 7-Zip installed on the PC. It runs as a sep
 | ALZ (ALZip) | Filee: store, deflate and ALZip's bzip2 variant | — |
 | EGG (ALZip) | Filee: store, deflate, bzip2, LZMA (decoded by 7-Zip); several blocks per file | — |
 
+- **ISO output** uses DiscUtils.Iso9660 (MIT), in-process, to write a data disc with ISO 9660 and Joliet Unicode names.
+  Files are streamed, empty directories and timestamps are retained, and the image replaces its destination only
+  after completion. Cancellation or failure removes the temporary image. ISO output is uncompressed: archive
+  compression levels have no effect. Joliet names over 64 UTF-16 characters, names containing semicolons, and
+  individual files of 4 GiB or more are rejected rather than silently renamed or truncated. Boot records and disc
+  metadata are not copied from source images; the result is a data disc, not a bootable clone.
 - **Extract** (target `folder`): the archive is unpacked into a hidden folder next to the result and moved into place
   when complete. When the archive holds exactly one top folder, its content becomes the result folder (`photos.zip`
   with `photos/…` gives `photos/…`, not `photos/photos/…`). Name conflicts follow the preset: `name (2)`, overwrite

@@ -955,7 +955,7 @@ public class UserDataStoreTests
         archives.PresetIds.Remove("zip-all");
 
         Assert.True(SettingsMigrations.ApplyToLibrary(27, presets, profiles));
-        Assert.Equal(["extract", "zip-all", "to-zip", "to-7z", "to-tgz", "to-tar"], archives.PresetIds);
+        Assert.Equal(["extract", "zip-all", "to-zip", "to-7z", "to-tgz", "to-tar", "to-iso"], archives.PresetIds);
         Assert.False(SettingsMigrations.ApplyToLibrary(27, presets, profiles)); // once only
 
         // A library without the preset (the user deleted it) doesn't get it back, and a full donut stays full.

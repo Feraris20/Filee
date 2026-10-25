@@ -409,6 +409,7 @@ public static class BuiltInData
 
         // Archives
         new() { Id = "to-zip", Name = "ZIP", TargetFormat = "zip" },
+        new() { Id = "to-iso", Name = "ISO", TargetFormat = "iso" },
         new() { Id = "to-7z", Name = "7Z", TargetFormat = "7z" },
         new() { Id = "to-tgz", Name = "TAR.GZ", TargetFormat = "tgz" },
         new() { Id = "to-tar", Name = "TAR", TargetFormat = "tar" },
@@ -620,7 +621,7 @@ public static class BuiltInData
             Id = "archives", NameKey = "profile.archives",
             Extensions = ExtensionsOf(FormatCategory.Archive),
             // "One ZIP" since settings schema 28.
-            PresetIds = ["extract", "zip-all", "to-zip", "to-7z", "to-tgz", "to-tar"],
+            PresetIds = ["extract", "zip-all", "to-zip", "to-7z", "to-tgz", "to-tar", "to-iso"],
             // Nothing else converts archives: no back face, Tab does nothing.
             BackPresetIds = [],
         },

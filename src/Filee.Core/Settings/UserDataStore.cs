@@ -872,6 +872,16 @@ internal static class SettingsMigrations
                 changed = true;
             }
         }
+        // v47: ISO output for archives; customised full toolbars retain their layout.
+        if (from < 47)
+        {
+            if (presets.All(p => p.Id != "to-iso"))
+            {
+                presets.Add(BuiltInData.CreatePresets().Single(p => p.Id == "to-iso"));
+                changed = true;
+            }
+            changed |= Offer(presets, profiles, "archives", "to-iso", "to-tar");
+        }
         return changed;
     }
 
