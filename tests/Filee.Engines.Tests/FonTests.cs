@@ -74,7 +74,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     {
         var bytes = Data(name);
         Assert.Equal("MZ", Encoding.ASCII.GetString(bytes, 0, 2));
-        var strikes = FonReader.Read(bytes);
+        var strikes = FonReader.Read(bytes, TestContext.Current.CancellationToken);
         Assert.Equal(name == "Fon-multi.fon" ? 3 : name == "Fon-edge.fon" ? 2 : 1, strikes.Count);
         Assert.Equal(version, strikes[0].Version);
         Assert.Equal(width, strikes[0].PixelWidth);
@@ -276,7 +276,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public void Every_bitmap_mask_matches_unhinted_integer_raster(int kindIndex)
     {
         var kind = Kinds[kindIndex];
-        var font = FonOutlineBuilder.Build(Assert.Single(FonReader.Read(Data(kind.File))));
+        var font = FonOutlineBuilder.Build(Assert.Single(FonReader.Read(Data(kind.File), TestContext.Current.CancellationToken)), TestContext.Current.CancellationToken);
         var glyphs = GlyfTable.ReadAll(font);
         using var face = SKTypeface.FromStream(new MemoryStream(font.Write()));
         var codes = Enumerable.Range(kind.First, 127 - kind.First + 1).ToArray();
@@ -309,8 +309,8 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public void Cmap_excludes_controls_and_undefined_bytes_without_losing_glyphs()
     {
         // 0x00..0x7F from the committed sample: controls 0x00..0x1F and DEL 0x7F keep glyphs but no cmap entry.
-        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-proportional.fon")));
-        var font = FonOutlineBuilder.Build(strike);
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-proportional.fon"), TestContext.Current.CancellationToken));
+        var font = FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken);
         var glyphs = GlyfTable.ReadAll(font);
         Assert.Equal(128 + 1, font.GlyphCount);
         var expected = Enumerable.Range(0x20, 0x7F - 0x20).ToDictionary(c => c, c => c + 1);
@@ -329,7 +329,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
             Glyphs = [.. Enumerable.Range(0x7E, 0xA0 - 0x7E + 1).Select(b => new FonGlyph((byte)b, 8, pixels))],
             DefaultChar = 0,
         };
-        font = FonOutlineBuilder.Build(high);
+        font = FonOutlineBuilder.Build(high, TestContext.Current.CancellationToken);
         glyphs = GlyfTable.ReadAll(font);
         Assert.Equal(high.Glyphs.Count + 1, font.GlyphCount);
         var map = new Dictionary<int, int> { [0x7E] = 1, [0xA0] = high.Glyphs.Count };
@@ -365,7 +365,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
             [163] = 1258,
             [222] = 874,
         };
-        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon")));
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon"), TestContext.Current.CancellationToken));
         var pixels = new bool[13, 8];
         pixels[1, 3] = true;
         var glyphs = Enumerable.Range(0xA1, 0xFE - 0xA1 + 1).Select(b => new FonGlyph((byte)b, 8, pixels)).ToList();
@@ -390,7 +390,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
                             continue;
                         expected.TryAdd(text[0], i + 1);
                     }
-                    var cmap = Cmap(FonOutlineBuilder.Build(strike with { CharSet = charset, Glyphs = glyphs, DefaultChar = 0 }));
+                    var cmap = Cmap(FonOutlineBuilder.Build(strike with { CharSet = charset, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken));
                     Assert.Equal(expected.OrderBy(p => p.Key), cmap.OrderBy(p => p.Key));
                 }
             }
@@ -400,13 +400,13 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
             CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = culture;
         }
         // Spot checks that the tables really differ: 0xC0 is À, А (Cyrillic) or ภ (Thai) depending on the charset.
-        Assert.Equal(0xC0 - 0xA1 + 1, Cmap(FonOutlineBuilder.Build(strike with { CharSet = 0, Glyphs = glyphs, DefaultChar = 0 }))[0x00C0]);
-        Assert.Equal(0xC0 - 0xA1 + 1, Cmap(FonOutlineBuilder.Build(strike with { CharSet = 204, Glyphs = glyphs, DefaultChar = 0 }))[0x0410]);
-        Assert.Equal(0xC0 - 0xA1 + 1, Cmap(FonOutlineBuilder.Build(strike with { CharSet = 222, Glyphs = glyphs, DefaultChar = 0 }))[0x0E20]);
+        Assert.Equal(0xC0 - 0xA1 + 1, Cmap(FonOutlineBuilder.Build(strike with { CharSet = 0, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken))[0x00C0]);
+        Assert.Equal(0xC0 - 0xA1 + 1, Cmap(FonOutlineBuilder.Build(strike with { CharSet = 204, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken))[0x0410]);
+        Assert.Equal(0xC0 - 0xA1 + 1, Cmap(FonOutlineBuilder.Build(strike with { CharSet = 222, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken))[0x0E20]);
         // ulUnicodeRange follows the mapped blocks of 0xA1..0xFE in each code page.
-        Assert.Equal([1, 2, 5], UnicodeRangeBits(FonOutlineBuilder.Build(strike with { CharSet = 238, Glyphs = glyphs, DefaultChar = 0 })));
-        Assert.Equal([1, 2, 3, 6, 33], UnicodeRangeBits(FonOutlineBuilder.Build(strike with { CharSet = 163, Glyphs = glyphs, DefaultChar = 0 })));
-        Assert.Equal([24], UnicodeRangeBits(FonOutlineBuilder.Build(strike with { CharSet = 222, Glyphs = glyphs, DefaultChar = 0 })));
+        Assert.Equal([1, 2, 5], UnicodeRangeBits(FonOutlineBuilder.Build(strike with { CharSet = 238, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken)));
+        Assert.Equal([1, 2, 3, 6, 33], UnicodeRangeBits(FonOutlineBuilder.Build(strike with { CharSet = 163, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken)));
+        Assert.Equal([24], UnicodeRangeBits(FonOutlineBuilder.Build(strike with { CharSet = 222, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken)));
     }
 
     /// <summary>Bytes the Unicode MICSFT tables mark UNDEFINED that .NET decodes to Private Use code points, by charset.</summary>
@@ -425,11 +425,11 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [InlineData(222)]
     public void Undefined_bytes_decoded_to_private_use_keep_glyphs_but_no_cmap(int charset)
     {
-        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon")));
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon"), TestContext.Current.CancellationToken));
         var pixels = new bool[13, 8];
         pixels[1, 3] = true;
         var glyphs = Enumerable.Range(0x80, 0x80).Select(b => new FonGlyph((byte)b, 8, pixels)).ToList();
-        var font = FonOutlineBuilder.Build(strike with { CharSet = (byte)charset, Glyphs = glyphs, DefaultChar = 0 });
+        var font = FonOutlineBuilder.Build(strike with { CharSet = (byte)charset, Glyphs = glyphs, DefaultChar = 0 }, TestContext.Current.CancellationToken);
         var cmap = Cmap(font);
         var outlines = GlyfTable.ReadAll(font);
         foreach (var b in UndefinedHigh[(byte)charset])
@@ -499,7 +499,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public void Hhea_extrema_and_caret_match_contoured_glyphs()
     {
         var kind = Kinds[1]; // proportional, 0x00..0x7F, default char 0
-        var font = FonOutlineBuilder.Build(Assert.Single(FonReader.Read(Data(kind.File))));
+        var font = FonOutlineBuilder.Build(Assert.Single(FonReader.Read(Data(kind.File), TestContext.Current.CancellationToken)), TestContext.Current.CancellationToken);
         var s = Scale(13);
         var contoured = new List<(int Advance, int Lsb, int XMin, int XMax)>();
         var advances = new List<int>();
@@ -529,10 +529,10 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Fact]
     public void Names_and_style_bits_match_each_resource()
     {
-        var single = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon")));
+        var single = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon"), TestContext.Current.CancellationToken));
         void Check(FonStrike strike, string family, string style, int weight, int fsSelection, int macStyle, int count = 1, int ordinal = 1)
         {
-            var font = FonOutlineBuilder.Build(strike, count, ordinal);
+            var font = FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken, count, ordinal);
             var full = $"{family} {style}";
             Assert.Equal(family, Name(font, 1));
             Assert.Equal(style, Name(font, 2));
@@ -547,21 +547,21 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         }
 
         Check(single, "Fixed", "Regular", 400, 0x40, 0);
-        Assert.Equal("Fixed_20Regular", Name(FonOutlineBuilder.Build(single), 6));
+        Assert.Equal("Fixed_20Regular", Name(FonOutlineBuilder.Build(single, TestContext.Current.CancellationToken), 6));
         Check(single with { Weight = 700, Italic = true }, "Fixed", "Bold Italic", 700, 0x21, 3);
         Check(single with { Weight = 700 }, "Fixed", "Bold", 700, 0x20, 1);
         Check(single with { Italic = true }, "Fixed", "Italic", 400, 0x01, 2);
         var unweighted = Data("Fon-v2-fixed.fon");
         BinaryPrimitives.WriteUInt16LittleEndian(unweighted.AsSpan(FntStart(unweighted) + 0x53), 0);
-        Check(Assert.Single(FonReader.Read(unweighted)), "Fixed", "Regular", 400, 0x40, 0);
+        Check(Assert.Single(FonReader.Read(unweighted, TestContext.Current.CancellationToken)), "Fixed", "Regular", 400, 0x40, 0);
         Check(single with { Weight = 500 }, "Fixed Weight500", "Regular", 500, 0x40, 0);
         Check(single, "Fixed 13px", "Regular", 400, 0x40, 0, count: 3);
         Check(single, "Fixed 13px-2", "Regular", 400, 0x40, 0, count: 3, ordinal: 2);
-        Assert.Equal("Fixed_2013px-2_20Regular", Name(FonOutlineBuilder.Build(single, 3, 2), 6));
+        Assert.Equal("Fixed_2013px-2_20Regular", Name(FonOutlineBuilder.Build(single, TestContext.Current.CancellationToken, 3, 2), 6));
 
         // A long non-ASCII face: nameID 6 is cut at a token boundary (at most 50) and gets a hash of the full name.
         var face = string.Concat(Enumerable.Repeat("Ä", 40));
-        var font = FonOutlineBuilder.Build(single with { Face = face });
+        var font = FonOutlineBuilder.Build(single with { Face = face }, TestContext.Current.CancellationToken);
         var full = $"{face} Regular";
         var ps = Name(font, 6)!;
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(full)).AsSpan(0, 6));
@@ -750,6 +750,31 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         return data;
     }
 
+    /// <summary>Every glyph aliases one blank bitmap; the decoded pixel count is not bounded by FNT size.</summary>
+    private static byte[] AliasedFnt(int width, int height, int glyphCount = 128)
+    {
+        const int table = 0x76;
+        var face = table + (glyphCount + 1) * 4;
+        var bits = face + 6;
+        var data = new byte[bits + ((width + 7) / 8) * height];
+        BinaryPrimitives.WriteUInt16LittleEndian(data, 0x0200);
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(2), (uint)data.Length);
+        BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(0x4a), (ushort)height);
+        BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(0x53), 400);
+        BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(0x58), (ushort)height);
+        data[0x60] = (byte)(glyphCount - 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(0x69), (uint)face);
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(0x71), (uint)bits);
+        for (var i = 0; i < glyphCount; i++)
+        {
+            BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(table + i * 4), (ushort)width);
+            BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(table + i * 4 + 2), (ushort)bits);
+        }
+        BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(table + glyphCount * 4 + 2), (ushort)data.Length);
+        "Fixed\0"u8.CopyTo(data.AsSpan(face));
+        return data;
+    }
+
     /// <summary>
     /// Runs <paramref name="data"/> as Name.fon under each conflict policy, with every name it would write already
     /// taken, and checks that nothing changed and nothing was reported.
@@ -780,7 +805,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         // The second RT_FONT's first bitmap points outside the resource: the reader fails before any output is built.
         var data = Data("Fon-multi.fon");
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(FntStart(data, 1) + 0x94 + 2), 0x7fffffff);
-        Assert.Throws<InvalidDataException>(() => FonReader.Read(data));
+        Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
 
         await AssertNothingWrittenAsync(data, ["Name-13px.ttf", "Name-13px-2.ttf", "Name-14px.ttf"], FileState.Failed, "outside the resource");
     }
@@ -790,11 +815,11 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     {
         var first = Resource(Data("Fon-multi.fon"), 0);
         var data = Container(first, WideOnePixelFnt());
-        var strikes = FonReader.Read(data);
+        var strikes = FonReader.Read(data, TestContext.Current.CancellationToken);
         Assert.Equal([13, 1], strikes.Select(s => s.PixelHeight));
         // The first resource builds completely on its own; the second passes the reader but not the builder.
-        Assert.NotEmpty(FontFile.Save(FonOutlineBuilder.Build(strikes[0], 2), "ttf", TestContext.Current.CancellationToken));
-        Assert.Contains("limits", Assert.Throws<InvalidDataException>(() => FonOutlineBuilder.Build(strikes[1], 2)).Message);
+        Assert.NotEmpty(FontFile.Save(FonOutlineBuilder.Build(strikes[0], TestContext.Current.CancellationToken, 2), "ttf", TestContext.Current.CancellationToken));
+        Assert.Contains("limits", Assert.Throws<InvalidDataException>(() => FonOutlineBuilder.Build(strikes[1], TestContext.Current.CancellationToken, 2)).Message);
 
         await AssertNothingWrittenAsync(data, ["Name-13px.ttf", "Name-1px.ttf"], FileState.Failed, "limits");
     }
@@ -826,6 +851,127 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     }
 
     [Fact]
+    public async Task Aliased_glyphs_over_filewide_pixel_limit_fail_without_outputs()
+    {
+        var data = Container(AliasedFnt(2048, 8), AliasedFnt(2049, 8));
+        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
+        Assert.Contains("unit limit", error.Message);
+        Assert.Contains($"{FonReader.MaxGlyphPixels:N0}", error.Message);
+
+        await AssertNothingWrittenAsync(data, ["Name-8px.ttf", "Name-8px-2.ttf"], FileState.Failed, "unit limit");
+    }
+
+    [Fact]
+    public void Aliased_glyphs_at_filewide_pixel_limit_are_accepted()
+    {
+        var data = Container(AliasedFnt(2048, 8), AliasedFnt(2048, 8));
+        var strikes = FonReader.Read(data, TestContext.Current.CancellationToken);
+        Assert.Equal(FonReader.MaxGlyphPixels, strikes.Sum(s => s.Glyphs.Sum(g => (long)g.Width * s.PixelHeight)));
+        Assert.All(strikes, s => Assert.All(s.Glyphs, g => Assert.False(g.Pixels[0, 0])));
+    }
+
+    [Fact]
+    public void Zero_width_glyph_rows_count_toward_filewide_budget()
+    {
+        var atLimit = Container(AliasedFnt(0, 16384, 256));
+        var strikes = FonReader.Read(atLimit, TestContext.Current.CancellationToken);
+        var strike = Assert.Single(strikes);
+        Assert.Equal(256, strike.Glyphs.Count);
+        Assert.Equal(FonReader.MaxGlyphPixels, strike.Glyphs.Sum(g => (long)Math.Max(g.Width, 1) * strike.PixelHeight));
+
+        var overLimit = Container(AliasedFnt(0, 16384, 256), AliasedFnt(0, 1, 1));
+        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(overLimit, TestContext.Current.CancellationToken));
+        Assert.Contains("unit limit", error.Message);
+    }
+
+    [Fact]
+    public void Already_cancelled_token_stops_reader_on_valid_fon()
+    {
+        var data = Data("Fon-v2-fixed.fon");
+        Assert.ThrowsAny<OperationCanceledException>(() => FonReader.Read(data, new CancellationToken(true)));
+    }
+
+    [Fact]
+    public void Already_cancelled_token_stops_builder_on_legal_strike()
+    {
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon"), TestContext.Current.CancellationToken));
+        Assert.ThrowsAny<OperationCanceledException>(() => FonOutlineBuilder.Build(strike, new CancellationToken(true)));
+    }
+
+    /// <summary>Cancels its token when the first full pass over the glyphs ends, i.e. after every outline is traced.</summary>
+    private sealed class CancelAfterFirstPass(IReadOnlyList<FonGlyph> glyphs, CancellationTokenSource cts) : IReadOnlyList<FonGlyph>
+    {
+        public FonGlyph this[int index] => glyphs[index];
+        public int Count => glyphs.Count;
+        public IEnumerator<FonGlyph> GetEnumerator()
+        {
+            foreach (var glyph in glyphs)
+                yield return glyph;
+            cts.Cancel();
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    [Fact]
+    public void Cancellation_after_tracing_stops_builder_before_serialization()
+    {
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-fixed.fon"), TestContext.Current.CancellationToken));
+        using var cts = new CancellationTokenSource();
+        var watched = strike with { Glyphs = new CancelAfterFirstPass(strike.Glyphs, cts) };
+
+        Assert.ThrowsAny<OperationCanceledException>(() => FonOutlineBuilder.Build(watched, cts.Token));
+        Assert.True(cts.IsCancellationRequested);
+    }
+
+    [Fact]
+    public void Pixel_height_above_units_per_em_limit_fails_in_reader()
+    {
+        var data = Container(AliasedFnt(0, 16385, 1));
+        Assert.Contains("height", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+    }
+
+    [Fact]
+    public async Task Cancelled_large_legal_strike_stops_builder_and_preserves_outputs()
+    {
+        var data = Container(AliasedFnt(128, 128, 256));
+        var source = Source(data, out var folder);
+        File.WriteAllText(Path.Combine(folder, "Name.ttf"), "old");
+        var before = Snapshot(folder);
+        var allocator = new RecordingAllocator(folder);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        var reports = new List<double>();
+        var progress = new SyncProgress(value =>
+        {
+            reports.Add(value);
+            if (value == 0.1)
+                cts.Cancel();
+        });
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new FontConverter().ConvertAsync(
+            new ConversionStep(source, "fon", "ttf", PresetFor("ttf"), allocator, fx.NewFolder()), progress, cts.Token));
+        Assert.Contains(0.1, reports);
+        Assert.Empty(allocator.Suffixes);
+        Assert.Equal(before.OrderBy(p => p.Key), Snapshot(folder).OrderBy(p => p.Key));
+    }
+
+    [Fact]
+    public void Later_rt_font_overlapping_nonadjacent_resource_is_rejected()
+    {
+        var resource = AliasedFnt(8, 8, 1);
+        var data = Container(resource, resource, resource);
+        var ne = (int)BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(0x3c));
+        var table = ne + BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(ne + 0x24));
+        var thirdEntry = table + 30 + 2 * 12;
+        var thirdStart = FntStart(data) + 1;
+        Assert.True(thirdStart + 1 <= FntStart(data, 1));
+        BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(thirdEntry), (ushort)thirdStart);
+        BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(thirdEntry + 2), 1);
+
+        Assert.Contains("overlapping or out-of-bounds RT_FONT resource",
+            Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+    }
+
+    [Fact]
     public async Task Queue_precancel_preserves_existing_outputs()
     {
         foreach (var policy in Enum.GetValues<ConflictPolicy>())
@@ -851,12 +997,12 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Fact]
     public async Task Extreme_heights_preserve_masks_and_overflows_fail()
     {
-        var strikes = FonReader.Read(Data("Fon-edge.fon"));
+        var strikes = FonReader.Read(Data("Fon-edge.fon"), TestContext.Current.CancellationToken);
         Assert.Equal([1, 256], strikes.Select(s => s.PixelHeight));
         foreach (var strike in strikes)
         {
             var height = strike.PixelHeight;
-            var font = FonOutlineBuilder.Build(strike);
+            var font = FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken);
             Assert.Equal(1024, U16(font.Require("head"), 18));
             using var face = SKTypeface.FromStream(new MemoryStream(font.Write()));
             for (var code = 32; code <= 34; code++)
@@ -867,11 +1013,11 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var pixels = new bool[1, 33];
         pixels[0, 32] = true;
         var overflowing = strikes[0] with { Glyphs = [new FonGlyph(32, 33, pixels)], DefaultChar = 0 };
-        Assert.Contains("limits", Assert.Throws<InvalidDataException>(() => FonOutlineBuilder.Build(overflowing)).Message);
+        Assert.Contains("limits", Assert.Throws<InvalidDataException>(() => FonOutlineBuilder.Build(overflowing, TestContext.Current.CancellationToken)).Message);
         // 31 pixels wide, x=30 lit: every coordinate and advance ends at 31 * 1024 = 31744 and fits.
         pixels = new bool[1, 31];
         pixels[0, 30] = true;
-        var fits = FonOutlineBuilder.Build(strikes[0] with { Glyphs = [new FonGlyph(32, 31, pixels)], DefaultChar = 0 });
+        var fits = FonOutlineBuilder.Build(strikes[0] with { Glyphs = [new FonGlyph(32, 31, pixels)], DefaultChar = 0 }, TestContext.Current.CancellationToken);
         Assert.Equal(31 * 1024, GlyfTable.ReadAll(fits)[1]!.XMax);
 
         // A bitmap that ends exactly at the end of the resource is read; one byte further is a clear error.
@@ -879,9 +1025,9 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var fnt = FntStart(data);
         var size = (int)BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(fnt + 2));
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(fnt + 0x76 + 2), (ushort)(size - 13));
-        Assert.Single(FonReader.Read(data));
+        Assert.Single(FonReader.Read(data, TestContext.Current.CancellationToken));
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(fnt + 0x76 + 2), (ushort)(size - 12));
-        Assert.Contains("outside the resource", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("outside the resource", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
 
         // Through the queue: an overflowing resource writes nothing.
         var source = Source(Container(WideOnePixelFnt()), out var folder);
@@ -916,7 +1062,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Fact]
     public void Zero_pix_width_uses_each_entry_width()
     {
-        var strike = Assert.Single(FonReader.Read(Data("Fon-v3-proportional.fon")));
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v3-proportional.fon"), TestContext.Current.CancellationToken));
         Assert.Equal(0, strike.PixelWidth);
         Assert.Equal(0, strike.Glyphs[0].Width);
         Assert.Equal(5, strike.Glyphs[1].Width);
@@ -929,7 +1075,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Fact]
     public void Control_bytes_and_delete_keep_glyphs()
     {
-        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-proportional.fon")));
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-proportional.fon"), TestContext.Current.CancellationToken));
         Assert.Equal(128, strike.Glyphs.Count);
         Assert.Equal((byte)0, strike.Glyphs[0].ByteValue);
         Assert.Equal((byte)31, strike.Glyphs[31].ByteValue);
@@ -942,8 +1088,8 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [InlineData("Fon-v3-proportional.fon", false)]
     public void Blank_and_zero_width_glyphs_keep_metrics(string sample, bool isFixed)
     {
-        var strike = Assert.Single(FonReader.Read(Data(sample)));
-        var font = FonOutlineBuilder.Build(strike);
+        var strike = Assert.Single(FonReader.Read(Data(sample), TestContext.Current.CancellationToken));
+        var font = FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken);
         var glyphs = GlyfTable.ReadAll(font);
         Assert.Equal(96 + 1, font.GlyphCount);
         Assert.Null(glyphs[1]); // the blank space, 0 or 8 pixels wide
@@ -961,10 +1107,10 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var fnt = FntStart(data);
         data[fnt + 0x61] = 1;
         data[fnt + 0x62] = 2;
-        var strike = Assert.Single(FonReader.Read(data));
+        var strike = Assert.Single(FonReader.Read(data, TestContext.Current.CancellationToken));
         Assert.Equal((1, 2, (byte)33), (strike.DefaultChar, strike.BreakChar, strike.Glyphs[strike.DefaultChar].ByteValue));
         // .notdef is the default glyph (code 33, the single pixel); the break glyph (34) is not forced onto U+0020.
-        var font = FonOutlineBuilder.Build(strike);
+        var font = FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken);
         var glyphs = GlyfTable.ReadAll(font);
         Assert.Equal(glyphs[2]!.Serialize(), glyphs[0]!.Serialize());
         Assert.Equal(Advance(font, 2), Advance(font, 0));
@@ -972,7 +1118,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Equal(3, Cmap(font)[0x22]);
 
         data[fnt + 0x61] = 96;
-        Assert.Contains("relative indices", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("relative indices", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
     }
 
     [Theory]
@@ -985,7 +1131,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public void V3_non_six_byte_flags_are_rejected_before_glyph_table(int flag)
     {
         var data = Data($"Fon-v3-flags-{flag:x2}.fon");
-        var error = Assert.Throws<NotSupportedException>(() => FonReader.Read(data));
+        var error = Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
         Assert.Contains($"dfFlags 0x{flag:X8}", error.Message);
     }
 
@@ -997,7 +1143,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     {
         var data = Data("Fon-v3-fixed.fon");
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(FntStart(data) + 0x76), flags);
-        var error = Assert.Throws<NotSupportedException>(() => FonReader.Read(data));
+        var error = Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
         Assert.Contains($"dfFlags 0x{flags:X8}", error.Message);
     }
 
@@ -1007,74 +1153,74 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var data = Data("Fon-multi.fon");
         var second = FntStart(data, 1);
         data[second + 0x42] = 1;
-        Assert.Contains("Vector", Assert.Throws<NotSupportedException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("Vector", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
         data[second + 0x42] = 4;
-        Assert.Contains("outside the file", Assert.Throws<NotSupportedException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("outside the file", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
         data[second + 0x42] = 0;
         foreach (var charset in new byte[] { 128, 129, 130, 134, 136, 2, 1, 255, 77, 99 }) // DBCS, SYMBOL, DEFAULT, OEM, MAC, unknown
         {
             data[second + 0x55] = charset;
-            Assert.Contains("character set", Assert.Throws<NotSupportedException>(() => FonReader.Read(data)).Message);
+            Assert.Contains("character set", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
         }
         data[second + 0x55] = 0;
         data[second] = 0;
         data[second + 1] = 1;
-        Assert.Contains("version", Assert.Throws<NotSupportedException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("version", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
 
         var pe = Data("Fon-v2-fixed.fon");
         pe[0x40] = (byte)'P';
         pe[0x41] = (byte)'E';
-        Assert.Contains("PE FON", Assert.Throws<NotSupportedException>(() => FonReader.Read(pe)).Message);
+        Assert.Contains("PE FON", Assert.Throws<NotSupportedException>(() => FonReader.Read(pe, TestContext.Current.CancellationToken)).Message);
         // A bare FNT and an MZ program without fonts.
         var fixedFon = Data("Fon-v2-fixed.fon");
-        Assert.Contains("MZ", Assert.Throws<InvalidDataException>(() => FonReader.Read(fixedFon[FntStart(fixedFon)..])).Message);
+        Assert.Contains("MZ", Assert.Throws<InvalidDataException>(() => FonReader.Read(fixedFon[FntStart(fixedFon)..], TestContext.Current.CancellationToken)).Message);
         var program = Data("Fon-v2-fixed.fon");
         var ne = 0x40;
         var table = ne + BinaryPrimitives.ReadUInt16LittleEndian(program.AsSpan(ne + 0x24));
         BinaryPrimitives.WriteUInt16LittleEndian(program.AsSpan(table + 22), 0x8006);
-        Assert.Contains("no RT_FONT", Assert.Throws<InvalidDataException>(() => FonReader.Read(program)).Message);
+        Assert.Contains("no RT_FONT", Assert.Throws<InvalidDataException>(() => FonReader.Read(program, TestContext.Current.CancellationToken)).Message);
     }
 
     [Fact]
     public void Truncated_ne_fnt_and_face_never_produce_outputs()
     {
         var source = Data("Fon-v2-fixed.fon");
-        Assert.Contains("NE header", Assert.Throws<InvalidDataException>(() => FonReader.Read(source[..0x40])).Message);
+        Assert.Contains("NE header", Assert.Throws<InvalidDataException>(() => FonReader.Read(source[..0x40], TestContext.Current.CancellationToken)).Message);
         var data = (byte[])source.Clone();
         var ne = 0x40;
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(ne + 0x26), 0x7fff);
-        Assert.Contains("resource table", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("resource table", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
 
         data = (byte[])source.Clone();
         var table = ne + BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(ne + 0x24));
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(table + 30), (ushort)table);
-        Assert.Contains("overlapping", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("overlapping", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
 
         data = (byte[])source.Clone();
         var fnt = FntStart(data);
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(fnt + 2), 0x7fffffff);
-        Assert.Contains("dfSize", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("dfSize", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
 
         data = (byte[])source.Clone();
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(fnt + 0x69), 0x7fffffff);
-        Assert.Contains("face offset", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("face offset", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
 
         data = (byte[])source.Clone();
         var size = (int)BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(fnt + 2));
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(fnt + 0x69), (uint)(size - 1));
         data[fnt + size - 1] = (byte)'F';
-        Assert.Contains("NUL", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("NUL", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
 
         data = (byte[])source.Clone();
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(fnt + 0x76 + 2), 0xffff);
-        Assert.Contains("bitmap", Assert.Throws<InvalidDataException>(() => FonReader.Read(data)).Message);
+        Assert.Contains("bitmap", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
     }
 
     [Fact]
     public void Builder_preserves_pixel_outlines_metrics_and_control_glyphs()
     {
-        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-proportional.fon")));
-        var font = FonOutlineBuilder.Build(strike);
+        var strike = Assert.Single(FonReader.Read(Data("Fon-v2-proportional.fon"), TestContext.Current.CancellationToken));
+        var font = FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken);
         Assert.Equal(strike.Glyphs.Count + 1, font.GlyphCount);
         Assert.Equal(13 * (1024 / 13), FontTables.UnitsPerEm(font.Require("head")));
         Assert.Equal(0x00010000u, font.Flavor);

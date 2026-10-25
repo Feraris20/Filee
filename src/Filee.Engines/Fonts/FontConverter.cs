@@ -49,19 +49,24 @@ public sealed class FontConverter : IConverter
     /// </summary>
     private static IReadOnlyList<string> ConvertFon(ConversionStep step, IProgress<double>? progress, CancellationToken cancellationToken)
     {
-        var strikes = FonReader.Read(File.ReadAllBytes(step.InputPath));
+        var strikes = FonReader.Read(File.ReadAllBytes(step.InputPath), cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         progress?.Report(0.1);
 
         // Same-height ordinals and the resource count are fixed now, so skipped outputs never rename the others.
         var ordinals = new int[strikes.Count];
+        var counts = new Dictionary<int, int>();
         for (var i = 0; i < strikes.Count; i++)
-            ordinals[i] = strikes.Take(i + 1).Count(s => s.PixelHeight == strikes[i].PixelHeight);
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var height = strikes[i].PixelHeight;
+            ordinals[i] = counts[height] = counts.GetValueOrDefault(height) + 1;
+        }
 
         var results = new byte[strikes.Count][];
         for (var i = 0; i < strikes.Count; i++)
         {
-            var font = FonOutlineBuilder.Build(strikes[i], strikes.Count, ordinals[i]);
+            var font = FonOutlineBuilder.Build(strikes[i], cancellationToken, strikes.Count, ordinals[i]);
             results[i] = FontFile.Save(font, step.To, cancellationToken);
             progress?.Report(i == 0 ? 0.85 : 0.85 + 0.05 * i / strikes.Count);
             cancellationToken.ThrowIfCancellationRequested();

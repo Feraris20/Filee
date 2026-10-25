@@ -11,7 +11,15 @@ internal static class FonOutlineBuilder
     private readonly record struct Corner(int X, int Y);
     private readonly record struct Edge(Corner From, Corner To);
 
-    public static SfntFont Build(FonStrike strike, int resourceCount = 1, int sameHeightOrdinal = 1)
+    public static SfntFont Build(FonStrike strike, int resourceCount = 1, int sameHeightOrdinal = 1) =>
+        Build(strike, CancellationToken.None, resourceCount, sameHeightOrdinal);
+
+    /// <summary>
+    /// Builds a validated strike, observing <paramref name="cancellationToken"/> for each glyph and raster row,
+    /// and at bounded intervals during edge expansion, grouping, contour walking and point compaction.
+    /// </summary>
+    public static SfntFont Build(FonStrike strike, CancellationToken cancellationToken,
+        int resourceCount = 1, int sameHeightOrdinal = 1)
     {
         if (resourceCount < 1 || sameHeightOrdinal < 1 || strike.Glyphs.Count is < 1 or > 65534)
             throw new InvalidDataException("FON resource or glyph count exceeds TrueType limits.");
@@ -30,10 +38,11 @@ internal static class FonOutlineBuilder
         var encoding = FonReader.CharSetEncoding(strike.CharSet);
         foreach (var source in strike.Glyphs)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var advance = checked(source.Width * scale);
             if (advance > ushort.MaxValue)
                 throw new InvalidDataException("FON glyph advance exceeds TrueType limits.");
-            glyphs.Add(Outline(source, strike.Ascent, scale));
+            glyphs.Add(Outline(source, strike.Ascent, scale, cancellationToken));
             widths.Add(advance);
             try
             {
@@ -54,7 +63,12 @@ internal static class FonOutlineBuilder
         glyphs[0] = glyphs[strike.DefaultChar + 1];
         widths[0] = widths[strike.DefaultChar + 1];
         var (glyf, loca, longLoca) = GlyfTable.Build(
-            [.. glyphs.Select(g => g?.Serialize() ?? [])], longFormat: false, alignment: 2);
+            [.. glyphs.Select(g =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return g?.Serialize() ?? [];
+            })], longFormat: false, alignment: 2);
+        cancellationToken.ThrowIfCancellationRequested();
         var leftBearings = glyphs.Select(g => g?.XMin ?? (short)0).ToArray();
         var covered = glyphs.Where(g => g is not null).Cast<TrueTypeGlyph>().ToArray();
         var xMin = covered.Length == 0 ? 0 : covered.Min(g => g.XMin);
@@ -101,16 +115,19 @@ internal static class FonOutlineBuilder
         return font;
     }
 
-    private static TrueTypeGlyph? Outline(FonGlyph source, int ascent, int scale)
+    private static TrueTypeGlyph? Outline(FonGlyph source, int ascent, int scale, CancellationToken cancellationToken)
     {
         var height = source.Pixels.GetLength(0);
         if (source.Pixels.GetLength(1) != source.Width)
             throw new InvalidDataException("FON glyph pixels and width disagree.");
+        if (source.Width == 0)
+            return null;
         // Extend identical horizontal runs into maximal rectangles, then cancel each shared unit edge.
         var active = new Dictionary<(int, int), (int Start, int End)>();
         var rectangles = new List<(int X0, int X1, int Y0, int Y1)>();
         for (var y = 0; y <= height; y++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var runs = new HashSet<(int, int)>();
             if (y < height)
                 for (var x = 0; x < source.Width;)
@@ -138,29 +155,46 @@ internal static class FonOutlineBuilder
             if (!edges.Remove(new Edge(to, from)))
                 edges.Add(new Edge(from, to));
         }
+        var work = 0;
         foreach (var (x0, x1, y0, y1) in rectangles)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             for (var x = x0; x < x1; x++)
             {
+                if ((++work & 4095) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
                 Add(new(x, y0), new(x + 1, y0));
                 Add(new(x + 1, y1), new(x, y1));
             }
             for (var y = y0; y < y1; y++)
             {
+                if ((++work & 4095) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
                 Add(new(x1, y), new(x1, y + 1));
                 Add(new(x0, y + 1), new(x0, y));
             }
         }
-        var outgoing = edges.GroupBy(e => e.From).ToDictionary(g => g.Key, g => g.ToList());
+        var outgoing = new Dictionary<Corner, List<Edge>>();
+        foreach (var edge in edges)
+        {
+            if ((++work & 4095) == 0)
+                cancellationToken.ThrowIfCancellationRequested();
+            if (!outgoing.TryGetValue(edge.From, out var choices))
+                outgoing.Add(edge.From, choices = []);
+            choices.Add(edge);
+        }
         var points = new List<GlyphPoint>();
         var ends = new List<ushort>();
         while (edges.Count != 0)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var start = edges.First();
             var edge = start;
             var loop = new List<Corner>();
             do
             {
+                if ((++work & 4095) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
                 if (!edges.Remove(edge))
                     throw new InvalidDataException("FON outline has an open boundary.");
                 loop.Add(edge.From);
@@ -177,6 +211,8 @@ internal static class FonOutlineBuilder
             } while (true);
             for (var i = 0; i < loop.Count; i++)
             {
+                if ((++work & 4095) == 0)
+                    cancellationToken.ThrowIfCancellationRequested();
                 var prev = loop[(i + loop.Count - 1) % loop.Count];
                 var curr = loop[i];
                 var next = loop[(i + 1) % loop.Count];

@@ -15,7 +15,19 @@ internal sealed record FonStrike(
 /// <summary>Reads the monochrome FNT v2/v3 resources of a 16-bit NE font library.</summary>
 internal static class FonReader
 {
-    public static IReadOnlyList<FonStrike> Read(byte[] data)
+    /// <summary>
+    /// Maximum sum of max(width, 1) * height for every glyph entry across all RT_FONT resources;
+    /// zero-width rows and entries aliasing the same bitmap bytes each count separately.
+    /// </summary>
+    internal const int MaxGlyphPixels = 4_194_304;
+
+    public static IReadOnlyList<FonStrike> Read(byte[] data) => Read(data, CancellationToken.None);
+
+    /// <summary>
+    /// Validates every glyph entry's max(width, 1) * height across all RT_FONT resources before decoding
+    /// (aliases count per entry), observing <paramref name="cancellationToken"/> at each glyph during preflight and decoding.
+    /// </summary>
+    public static IReadOnlyList<FonStrike> Read(byte[] data, CancellationToken cancellationToken)
     {
         if (data.Length < 0x40 || data[0] != 'M' || data[1] != 'Z')
             throw new InvalidDataException("FON requires an MZ executable header.");
@@ -36,7 +48,6 @@ internal static class FonReader
         if (shift > 15)
             throw new InvalidDataException("FON has an invalid NE resource alignment shift.");
 
-        var strikes = new List<FonStrike>();
         var ranges = new List<(long Start, long End)>();
         var cursor = table + 2;
         var terminated = false;
@@ -61,23 +72,32 @@ internal static class FonReader
                     var entry = cursor + (long)i * 12;
                     var start = (long)U16(data, entry) << shift;
                     var length = (long)U16(data, entry + 2) << shift;
-                    if (length == 0 || start < end || !Fits(data.Length, start, length) ||
-                        ranges.Any(r => start < r.End && r.Start < start + length))
+                    if (length == 0 || start < end || !Fits(data.Length, start, length))
                         throw new InvalidDataException("FON has an overlapping or out-of-bounds RT_FONT resource.");
                     ranges.Add((start, start + length));
-                    strikes.Add(ReadFnt(data.AsSpan((int)start, (int)length)));
                 }
             }
             cursor += (long)count * 12;
         }
         if (!terminated)
             throw new InvalidDataException("FON has an unterminated NE resource table.");
-        if (strikes.Count == 0)
+        if (ranges.Count == 0)
             throw new InvalidDataException("FON contains no RT_FONT resources.");
+        var sorted = ranges.OrderBy(r => r.Start).ToArray();
+        for (var i = 1; i < sorted.Length; i++)
+            if (sorted[i].Start < sorted[i - 1].End)
+                throw new InvalidDataException("FON has an overlapping or out-of-bounds RT_FONT resource.");
+        long glyphPixels = 0;
+        foreach (var (start, stop) in ranges)
+            ReadFnt(data.AsSpan((int)start, (int)(stop - start)), false, ref glyphPixels, cancellationToken);
+        var strikes = new List<FonStrike>(ranges.Count);
+        foreach (var (start, stop) in ranges)
+            strikes.Add(ReadFnt(data.AsSpan((int)start, (int)(stop - start)), true, ref glyphPixels, cancellationToken)!);
         return strikes;
     }
 
-    private static FonStrike ReadFnt(ReadOnlySpan<byte> resource)
+    private static FonStrike? ReadFnt(ReadOnlySpan<byte> resource, bool decode, ref long glyphPixels,
+        CancellationToken cancellationToken)
     {
         if (resource.Length < 6)
             throw new InvalidDataException("RT_FONT has a truncated FNT header.");
@@ -106,7 +126,7 @@ internal static class FonReader
         var first = fnt[0x5f];
         var last = fnt[0x60];
         var count = last - first + 1;
-        if (height == 0 || ascent > height || count <= 0)
+        if (height == 0 || height > 16384 || ascent > height || count <= 0)
             throw new InvalidDataException("FNT has an invalid height, ascent or character range.");
         var defaultChar = fnt[0x61];
         var breakChar = fnt[0x62];
@@ -142,21 +162,31 @@ internal static class FonReader
         var bitsOffset = (long)U32(fnt, 0x71);
         if (bitsOffset < tableEnd || bitsOffset > size)
             throw new InvalidDataException("FNT bitmap region offset is outside the resource.");
-        var glyphs = new List<FonGlyph>(count);
+        var glyphs = decode ? new List<FonGlyph>(count) : null;
         for (var i = 0; i < count; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var entry = header + i * entrySize;
             var width = U16(fnt, entry);
             var offset = version == 0x0200 ? U16(fnt, entry + 2) : U32(fnt, entry + 2);
             var bytes = ((long)width + 7) / 8 * height;
             if (offset < bitsOffset || !Fits(size, offset, bytes))
                 throw new InvalidDataException($"FNT bitmap for character {first + i} is outside the resource.");
+            if (!decode)
+            {
+                glyphPixels += (long)Math.Max((int)width, 1) * height;
+                if (glyphPixels > MaxGlyphPixels)
+                    throw new InvalidDataException($"FON glyph bitmap rows/pixels exceed the {MaxGlyphPixels:N0}-unit limit.");
+                continue;
+            }
             var pixels = new bool[height, width];
             for (var y = 0; y < height; y++)
                 for (var x = 0; x < width; x++)
                     pixels[y, x] = (fnt[(int)(offset + (long)(x / 8) * height + y)] & (0x80 >> (x % 8))) != 0;
-            glyphs.Add(new FonGlyph((byte)(first + i), width, pixels));
+            glyphs!.Add(new FonGlyph((byte)(first + i), width, pixels));
         }
+        if (glyphs is null)
+            return null;
         return new FonStrike(version, U16(fnt, 0x56), height, ascent, U16(fnt, 0x4e),
             fnt[0x50] != 0, weight == 0 ? 400 : weight, charset, face, defaultChar, breakChar, glyphs);
     }
