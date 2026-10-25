@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Filee.Core.Conversion;
 
 namespace Filee.Engines.Fonts;
 
@@ -24,13 +25,15 @@ internal static class FonOutlineBuilder
     public static SfntFont Build(FonStrike strike, CancellationToken cancellationToken,
         int resourceCount = 1, int sameHeightOrdinal = 1)
     {
-        if (resourceCount < 1 || sameHeightOrdinal < 1 || strike.Glyphs.Count is < 1 or > 65534)
-            throw new InvalidDataException("FON resource or glyph count exceeds TrueType limits.");
+        if (resourceCount < 1 || sameHeightOrdinal < 1 || strike.Glyphs.Count < 1)
+            throw new ConversionRefusedException("error.fon_damaged");
+        if (strike.Glyphs.Count > 65534)
+            throw new ConversionRefusedException("error.fon_too_large", "65535");
         var height = strike.PixelHeight;
         var scale = Scale(height);
         var upem = checked(height * scale);
         if (upem is < 16 or > 16384)
-            throw new InvalidDataException("FON pixel height exceeds TrueType units-per-em limits.");
+            throw new ConversionRefusedException("error.fon_too_large", "16384");
         var ascent = Signed(strike.Ascent * scale);
         var descent = Signed(-(height - strike.Ascent) * scale);
         var lineGap = Signed(strike.ExternalLeading * scale);
@@ -44,7 +47,7 @@ internal static class FonOutlineBuilder
             cancellationToken.ThrowIfCancellationRequested();
             var advance = checked(source.Width * scale);
             if (advance > ushort.MaxValue)
-                throw new InvalidDataException("FON glyph advance exceeds TrueType limits.");
+                throw new ConversionRefusedException("error.fon_too_large", "65535");
             glyphs.Add(Outline(source, strike.Ascent, scale, cancellationToken));
             widths.Add(advance);
             try
@@ -122,7 +125,7 @@ internal static class FonOutlineBuilder
     {
         var height = source.Pixels.GetLength(0);
         if (source.Pixels.GetLength(1) != source.Width)
-            throw new InvalidDataException("FON glyph pixels and width disagree.");
+            throw new ConversionRefusedException("error.fon_damaged");
         if (source.Width == 0)
             return null;
         // Extend identical horizontal runs into maximal rectangles, then cancel each shared unit edge.
@@ -199,18 +202,18 @@ internal static class FonOutlineBuilder
                 if ((++work & 4095) == 0)
                     cancellationToken.ThrowIfCancellationRequested();
                 if (!edges.Remove(edge))
-                    throw new InvalidDataException("FON outline has an open boundary.");
+                    throw new ConversionRefusedException("error.fon_damaged");
                 loop.Add(edge.From);
                 if (edge.To == start.From)
                     break;
                 if (!outgoing.TryGetValue(edge.To, out var choices))
-                    throw new InvalidDataException("FON outline has an open boundary.");
+                    throw new ConversionRefusedException("error.fon_damaged");
                 var dx = edge.To.X - edge.From.X;
                 var dy = edge.To.Y - edge.From.Y;
                 edge = choices.Where(edges.Contains).OrderByDescending(e =>
                     dx * (e.To.Y - e.From.Y) - dy * (e.To.X - e.From.X)).FirstOrDefault();
                 if (edge == default)
-                    throw new InvalidDataException("FON outline has an open boundary.");
+                    throw new ConversionRefusedException("error.fon_damaged");
             } while (true);
             for (var i = 0; i < loop.Count; i++)
             {
@@ -227,7 +230,7 @@ internal static class FonOutlineBuilder
                 points.Add(new GlyphPoint(Signed(x), Signed(y), true));
             }
             if (points.Count > ushort.MaxValue || ends.Count == short.MaxValue)
-                throw new InvalidDataException("FON outline exceeds TrueType point or contour limits.");
+                throw new ConversionRefusedException("error.fon_too_large", points.Count > ushort.MaxValue ? "65535" : "32767");
             ends.Add((ushort)(points.Count - 1));
         }
         var result = new TrueTypeGlyph
@@ -334,7 +337,7 @@ internal static class FonOutlineBuilder
             1256 => 6,
             1257 => 7,
             1258 => 8,
-            _ => throw new InvalidDataException("FON code page is invalid.")
+            _ => throw new ConversionRefusedException("error.fon_damaged")
         };
         Put32(b, 78, 1u << cpBit);
         return b;
@@ -362,7 +365,7 @@ internal static class FonOutlineBuilder
         foreach (var record in records)
         {
             if (record.Bytes.Length > ushort.MaxValue || offset > ushort.MaxValue - record.Bytes.Length)
-                throw new InvalidDataException("FON name strings exceed TrueType limits.");
+                throw new ConversionRefusedException("error.fon_too_large", "65535");
             w.U16(record.Platform); w.U16(record.Encoding); w.U16(record.Language);
             w.U16(record.Id); w.U16(record.Bytes.Length); w.U16(offset);
             offset += record.Bytes.Length;
@@ -421,7 +424,7 @@ internal static class FonOutlineBuilder
 
     private static short Signed(int value) =>
         value is >= short.MinValue and <= short.MaxValue
-            ? (short)value : throw new InvalidDataException("FON outline or metrics exceed signed TrueType limits.");
+            ? (short)value : throw new ConversionRefusedException("error.fon_too_large", "32767");
 
     private static void Put16(byte[] b, int offset, int value) =>
         BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(offset), checked((ushort)(value & 0xffff)));

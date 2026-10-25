@@ -5,6 +5,7 @@ using System.Buffers.Binary;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Filee.Core.Conversion;
 using Filee.Core.Presets;
 using Filee.Engines.Fonts;
@@ -789,11 +790,39 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         return data;
     }
 
+    private static void AssertRefused(Action action, string key, string? detail = null)
+    {
+        var error = Assert.Throws<ConversionRefusedException>(action);
+        Assert.Equal(key, error.ErrorKey);
+        Assert.Equal(detail, error.Detail);
+        Assert.True(error.Detail is null || Regex.IsMatch(error.Detail,
+            @"^(PE|FNT 0x[0-9A-F]{4}|dfFlags 0x[0-9A-F]{8}|charset \d+|[0-9][0-9,]*)$"));
+    }
+
+    [Fact]
+    public void Refusal_details_are_language_neutral()
+    {
+        var data = Data("Fon-v2-fixed.fon");
+        var offset = FntStart(data);
+        var cases = new List<(byte[] Data, string Key, string? Detail)>();
+        data[offset + 0x42] = 1;
+        cases.Add((data, "error.fon_vector", null));
+        data = Data("Fon-v2-fixed.fon");
+        data[FntStart(data) + 0x55] = 128;
+        cases.Add((data, "error.fon_unsupported", "charset 128"));
+        cases.Add((FonBuilder.Container([AliasedFnt(64, 1, 1)]), "error.fon_too_large", "65535"));
+        cases.Add(([], "error.fon_damaged", null));
+
+        foreach (var (sample, key, detail) in cases)
+            AssertRefused(() => FonReader.Read(sample, TestContext.Current.CancellationToken), key, detail);
+    }
+
     /// <summary>
     /// Runs <paramref name="data"/> as Name.fon under each conflict policy, with every name it would write already
     /// taken, and checks that nothing changed and nothing was reported.
     /// </summary>
-    private async Task AssertNothingWrittenAsync(byte[] data, string[] taken, FileState state, string? error = null)
+    private async Task AssertNothingWrittenAsync(byte[] data, string[] taken, FileState state,
+        string? errorKey = null, string? detail = null)
     {
         foreach (var policy in Enum.GetValues<ConflictPolicy>())
         {
@@ -806,8 +835,11 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
 
             var file = Assert.Single(job.Files);
             Assert.Equal(state, file.State);
-            if (error is not null)
-                Assert.Contains(error, file.ErrorDetail);
+            if (errorKey is not null)
+            {
+                Assert.Equal(errorKey, file.ErrorKey);
+                Assert.Equal(detail, file.ErrorDetail);
+            }
             Assert.Empty(job.Outputs);
             Assert.Equal(before.OrderBy(p => p.Key), Snapshot(folder).OrderBy(p => p.Key));
         }
@@ -819,9 +851,9 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         // The second RT_FONT's first bitmap points outside the resource: the reader fails before any output is built.
         var data = Data("Fon-multi.fon");
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(FntStart(data, 1) + 0x94 + 2), 0x7fffffff);
-        Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
 
-        await AssertNothingWrittenAsync(data, ["Name-13px.ttf", "Name-13px-2.ttf", "Name-14px.ttf"], FileState.Failed, "outside the resource");
+        await AssertNothingWrittenAsync(data, ["Name-13px.ttf", "Name-13px-2.ttf", "Name-14px.ttf"], FileState.Failed, "error.fon_damaged");
     }
 
     [Fact]
@@ -833,9 +865,9 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Equal([13, 1], strikes.Select(s => s.PixelHeight));
         // The first resource builds completely on its own; the second passes the reader but not the builder.
         Assert.NotEmpty(FontFile.Save(FonOutlineBuilder.Build(strikes[0], TestContext.Current.CancellationToken, 2), "ttf", TestContext.Current.CancellationToken));
-        Assert.Contains("limits", Assert.Throws<InvalidDataException>(() => FonOutlineBuilder.Build(strikes[1], TestContext.Current.CancellationToken, 2)).Message);
+        AssertRefused(() => FonOutlineBuilder.Build(strikes[1], TestContext.Current.CancellationToken, 2), "error.fon_too_large", "32767");
 
-        await AssertNothingWrittenAsync(data, ["Name-13px.ttf", "Name-1px.ttf"], FileState.Failed, "limits");
+        await AssertNothingWrittenAsync(data, ["Name-13px.ttf", "Name-1px.ttf"], FileState.Failed, "error.fon_too_large", "32767");
     }
 
     [Fact]
@@ -868,11 +900,11 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public async Task Aliased_glyphs_over_filewide_pixel_limit_fail_without_outputs()
     {
         var data = Container(AliasedFnt(16, 1024), AliasedFnt(17, 1024));
-        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
-        Assert.Contains("unit limit", error.Message);
-        Assert.Contains($"{FonReader.MaxGlyphPixels:N0}", error.Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken),
+            "error.fon_too_large", FonReader.MaxGlyphPixels.ToString("N0", CultureInfo.InvariantCulture));
 
-        await AssertNothingWrittenAsync(data, ["Name-1024px.ttf", "Name-1024px-2.ttf"], FileState.Failed, "unit limit");
+        await AssertNothingWrittenAsync(data, ["Name-1024px.ttf", "Name-1024px-2.ttf"], FileState.Failed,
+            "error.fon_too_large", FonReader.MaxGlyphPixels.ToString("N0", CultureInfo.InvariantCulture));
     }
 
     [Fact]
@@ -880,8 +912,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     {
         var data = FonBuilder.Container([AliasedFnt(64, 1, 1)]);
 
-        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
-        Assert.Contains("65535", error.Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_too_large", "65535");
     }
 
     [Fact]
@@ -906,11 +937,10 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Single(FonReader.Read(FonBuilder.V2Fixed(), TestContext.Current.CancellationToken));
 
         var before = GC.GetAllocatedBytesForCurrentThread();
-        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken),
+            "error.fon_too_large", FonReader.MaxGlyphPixels.ToString("N0", CultureInfo.InvariantCulture));
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 
-        Assert.Contains("unit limit", error.Message);
-        Assert.Contains($"{FonReader.MaxGlyphPixels:N0}", error.Message);
         Assert.True(allocated < 1_000_000, $"Reader allocated {allocated:N0} bytes.");
     }
 
@@ -933,8 +963,8 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Equal(FonReader.MaxGlyphPixels, strike.Glyphs.Sum(g => (long)Math.Max(g.Width, 1) * strike.PixelHeight));
 
         var overLimit = Container(AliasedFnt(0, 16384, 256), AliasedFnt(0, 1, 1));
-        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(overLimit, TestContext.Current.CancellationToken));
-        Assert.Contains("unit limit", error.Message);
+        AssertRefused(() => FonReader.Read(overLimit, TestContext.Current.CancellationToken),
+            "error.fon_too_large", FonReader.MaxGlyphPixels.ToString("N0", CultureInfo.InvariantCulture));
     }
 
     [Fact]
@@ -980,7 +1010,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public void Pixel_height_above_units_per_em_limit_fails_in_reader()
     {
         var data = Container(AliasedFnt(0, 16385, 1));
-        Assert.Contains("height", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_too_large", "16384");
     }
 
     [Fact]
@@ -1020,8 +1050,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(thirdEntry), (ushort)thirdStart);
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(thirdEntry + 2), 1);
 
-        Assert.Contains("overlapping or out-of-bounds RT_FONT resource",
-            Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
     }
 
     [Fact]
@@ -1066,7 +1095,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var pixels = new bool[1, 33];
         pixels[0, 32] = true;
         var overflowing = strikes[0] with { Glyphs = [new FonGlyph(32, 33, pixels)], DefaultChar = 0 };
-        Assert.Contains("limits", Assert.Throws<InvalidDataException>(() => FonOutlineBuilder.Build(overflowing, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonOutlineBuilder.Build(overflowing, TestContext.Current.CancellationToken), "error.fon_too_large", "32767");
         // 31 pixels wide, x=30 lit: every coordinate and advance ends at 31 * 1024 = 31744 and fits.
         pixels = new bool[1, 31];
         pixels[0, 30] = true;
@@ -1080,12 +1109,15 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(fnt + 0x76 + 2), (ushort)(size - 13));
         Assert.Single(FonReader.Read(data, TestContext.Current.CancellationToken));
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(fnt + 0x76 + 2), (ushort)(size - 12));
-        Assert.Contains("outside the resource", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
 
         // Through the queue: an overflowing resource writes nothing.
         var source = Source(Container(WideOnePixelFnt()), out var folder);
         var job = await fx.ConvertAsync([source], PresetFor("ttf"));
-        Assert.Equal(FileState.Failed, Assert.Single(job.Files).State);
+        var failed = Assert.Single(job.Files);
+        Assert.Equal(FileState.Failed, failed.State);
+        Assert.Equal("error.fon_too_large", failed.ErrorKey);
+        Assert.Equal("32767", failed.ErrorDetail);
         Assert.Equal(["Name.fon"], Directory.EnumerateFiles(folder).Select(Path.GetFileName));
     }
 
@@ -1171,7 +1203,7 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Equal(3, Cmap(font)[0x22]);
 
         data[fnt + 0x61] = 96;
-        Assert.Contains("relative indices", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
     }
 
     [Theory]
@@ -1184,8 +1216,8 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     public void V3_non_six_byte_flags_are_rejected_before_glyph_table(int flag)
     {
         var data = Data($"Fon-v3-flags-{flag:x2}.fon");
-        var error = Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
-        Assert.Contains($"dfFlags 0x{flag:X8}", error.Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken),
+            "error.fon_unsupported", $"dfFlags 0x{flag:X8}");
     }
 
     [Theory]
@@ -1196,8 +1228,8 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     {
         var data = Data("Fon-v3-fixed.fon");
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(FntStart(data) + 0x76), flags);
-        var error = Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
-        Assert.Contains($"dfFlags 0x{flags:X8}", error.Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken),
+            "error.fon_unsupported", $"dfFlags 0x{flags:X8}");
     }
 
     [Fact]
@@ -1206,67 +1238,68 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var data = Data("Fon-multi.fon");
         var second = FntStart(data, 1);
         data[second + 0x42] = 1;
-        Assert.Contains("Vector", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_vector");
         data[second + 0x42] = 4;
-        Assert.Contains("outside the file", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_unsupported");
         data[second + 0x42] = 0;
         foreach (var charset in new byte[] { 128, 129, 130, 134, 136, 2, 1, 255, 77, 99 }) // DBCS, SYMBOL, DEFAULT, OEM, MAC, unknown
         {
             data[second + 0x55] = charset;
-            Assert.Contains("character set", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+            AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken),
+                "error.fon_unsupported", $"charset {charset}");
         }
         data[second + 0x55] = 0;
         data[second] = 0;
         data[second + 1] = 1;
-        Assert.Contains("version", Assert.Throws<NotSupportedException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_unsupported", "FNT 0x0100");
 
         var pe = Data("Fon-v2-fixed.fon");
         pe[0x40] = (byte)'P';
         pe[0x41] = (byte)'E';
-        Assert.Contains("PE FON", Assert.Throws<NotSupportedException>(() => FonReader.Read(pe, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(pe, TestContext.Current.CancellationToken), "error.fon_unsupported", "PE");
         // A bare FNT and an MZ program without fonts.
         var fixedFon = Data("Fon-v2-fixed.fon");
-        Assert.Contains("MZ", Assert.Throws<InvalidDataException>(() => FonReader.Read(fixedFon[FntStart(fixedFon)..], TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(fixedFon[FntStart(fixedFon)..], TestContext.Current.CancellationToken), "error.fon_damaged");
         var program = Data("Fon-v2-fixed.fon");
         var ne = 0x40;
         var table = ne + BinaryPrimitives.ReadUInt16LittleEndian(program.AsSpan(ne + 0x24));
         BinaryPrimitives.WriteUInt16LittleEndian(program.AsSpan(table + 22), 0x8006);
-        Assert.Contains("no RT_FONT", Assert.Throws<InvalidDataException>(() => FonReader.Read(program, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(program, TestContext.Current.CancellationToken), "error.fon_damaged");
     }
 
     [Fact]
     public void Truncated_ne_fnt_and_face_never_produce_outputs()
     {
         var source = Data("Fon-v2-fixed.fon");
-        Assert.Contains("NE header", Assert.Throws<InvalidDataException>(() => FonReader.Read(source[..0x40], TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(source[..0x40], TestContext.Current.CancellationToken), "error.fon_damaged");
         var data = (byte[])source.Clone();
         var ne = 0x40;
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(ne + 0x26), 0x7fff);
-        Assert.Contains("resource table", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
 
         data = (byte[])source.Clone();
         var table = ne + BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(ne + 0x24));
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(table + 30), (ushort)table);
-        Assert.Contains("overlapping", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
 
         data = (byte[])source.Clone();
         var fnt = FntStart(data);
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(fnt + 2), 0x7fffffff);
-        Assert.Contains("dfSize", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
 
         data = (byte[])source.Clone();
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(fnt + 0x69), 0x7fffffff);
-        Assert.Contains("face offset", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
 
         data = (byte[])source.Clone();
         var size = (int)BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(fnt + 2));
         BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(fnt + 0x69), (uint)(size - 1));
         data[fnt + size - 1] = (byte)'F';
-        Assert.Contains("NUL", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
 
         data = (byte[])source.Clone();
         BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(fnt + 0x76 + 2), 0xffff);
-        Assert.Contains("bitmap", Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken)).Message);
+        AssertRefused(() => FonReader.Read(data, TestContext.Current.CancellationToken), "error.fon_damaged");
     }
 
     [Fact]

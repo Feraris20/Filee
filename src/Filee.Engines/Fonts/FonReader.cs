@@ -1,5 +1,7 @@
 using System.Buffers.Binary;
+using System.Globalization;
 using System.Text;
+using Filee.Core.Conversion;
 
 namespace Filee.Engines.Fonts;
 
@@ -30,23 +32,23 @@ internal static class FonReader
     public static IReadOnlyList<FonStrike> Read(byte[] data, CancellationToken cancellationToken)
     {
         if (data.Length < 0x40 || data[0] != 'M' || data[1] != 'Z')
-            throw new InvalidDataException("FON requires an MZ executable header.");
+            throw new ConversionRefusedException("error.fon_damaged");
 
         var ne = (long)BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(0x3c));
         if (!Fits(data.Length, ne, 0x28))
-            throw new InvalidDataException("FON has a truncated NE header.");
+            throw new ConversionRefusedException("error.fon_damaged");
         if (data[ne] == 'P' && data[ne + 1] == 'E')
-            throw new NotSupportedException("PE FON resources are not supported; an NE font is required.");
+            throw new ConversionRefusedException("error.fon_unsupported", "PE");
         if (data[ne] != 'N' || data[ne + 1] != 'E')
-            throw new InvalidDataException("FON has no NE executable header.");
+            throw new ConversionRefusedException("error.fon_damaged");
 
         var table = ne + U16(data, ne + 0x24);
         var end = ne + U16(data, ne + 0x26);
         if (end <= table || !Fits(data.Length, table, 2) || end > data.Length)
-            throw new InvalidDataException("FON has an invalid NE resource table.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var shift = U16(data, table);
         if (shift > 15)
-            throw new InvalidDataException("FON has an invalid NE resource alignment shift.");
+            throw new ConversionRefusedException("error.fon_damaged");
 
         var ranges = new List<(long Start, long End)>();
         var cursor = table + 2;
@@ -60,11 +62,11 @@ internal static class FonReader
                 break;
             }
             if (!Fits(end, cursor, 8))
-                throw new InvalidDataException("FON has a truncated NE resource type.");
+                throw new ConversionRefusedException("error.fon_damaged");
             var count = U16(data, cursor + 2);
             cursor += 8;
             if (!Fits(end, cursor, (long)count * 12))
-                throw new InvalidDataException("FON has a truncated NE resource name table.");
+                throw new ConversionRefusedException("error.fon_damaged");
             if (type == 0x8008)
             {
                 for (var i = 0; i < count; i++)
@@ -73,20 +75,20 @@ internal static class FonReader
                     var start = (long)U16(data, entry) << shift;
                     var length = (long)U16(data, entry + 2) << shift;
                     if (length == 0 || start < end || !Fits(data.Length, start, length))
-                        throw new InvalidDataException("FON has an overlapping or out-of-bounds RT_FONT resource.");
+                        throw new ConversionRefusedException("error.fon_damaged");
                     ranges.Add((start, start + length));
                 }
             }
             cursor += (long)count * 12;
         }
         if (!terminated)
-            throw new InvalidDataException("FON has an unterminated NE resource table.");
+            throw new ConversionRefusedException("error.fon_damaged");
         if (ranges.Count == 0)
-            throw new InvalidDataException("FON contains no RT_FONT resources.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var sorted = ranges.OrderBy(r => r.Start).ToArray();
         for (var i = 1; i < sorted.Length; i++)
             if (sorted[i].Start < sorted[i - 1].End)
-                throw new InvalidDataException("FON has an overlapping or out-of-bounds RT_FONT resource.");
+                throw new ConversionRefusedException("error.fon_damaged");
         long glyphPixels = 0;
         foreach (var (start, stop) in ranges)
             ReadFnt(data.AsSpan((int)start, (int)(stop - start)), false, ref glyphPixels, cancellationToken);
@@ -100,25 +102,25 @@ internal static class FonReader
         CancellationToken cancellationToken)
     {
         if (resource.Length < 6)
-            throw new InvalidDataException("RT_FONT has a truncated FNT header.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var version = U16(resource, 0);
         if (version is not (0x0200 or 0x0300))
-            throw new NotSupportedException($"FNT version 0x{version:X4} is not supported (only v2/v3).");
+            throw new ConversionRefusedException("error.fon_unsupported", $"FNT 0x{version:X4}");
         var header = version == 0x0200 ? 0x76 : 0x94;
         var size = (long)U32(resource, 2);
         if (size < header || size > resource.Length)
-            throw new InvalidDataException("RT_FONT has an invalid FNT dfSize or truncated header.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var fnt = resource[..(int)size];
         var type = U16(fnt, 0x42);
         if ((type & 1) != 0)
-            throw new NotSupportedException("Vector FNT fonts are not supported.");
+            throw new ConversionRefusedException("error.fon_vector");
         if ((type & 4) != 0)
-            throw new NotSupportedException("FNT bitmap pixels stored outside the file are not supported.");
+            throw new ConversionRefusedException("error.fon_unsupported");
         if (version == 0x0300)
         {
             var flags = U32(fnt, 0x76);
             if (flags is not (1 or 2))
-                throw new NotSupportedException($"FNT v3 dfFlags 0x{flags:X8} uses an unsupported glyph table or color format.");
+                throw new ConversionRefusedException("error.fon_unsupported", $"dfFlags 0x{flags:X8}");
         }
 
         var height = U16(fnt, 0x58);
@@ -126,42 +128,44 @@ internal static class FonReader
         var first = fnt[0x5f];
         var last = fnt[0x60];
         var count = last - first + 1;
-        if (height == 0 || height > 16384 || ascent > height || count <= 0)
-            throw new InvalidDataException("FNT has an invalid height, ascent or character range.");
+        if (height > 16384)
+            throw new ConversionRefusedException("error.fon_too_large", "16384");
+        if (height == 0 || ascent > height || count <= 0)
+            throw new ConversionRefusedException("error.fon_damaged");
         var defaultChar = fnt[0x61];
         var breakChar = fnt[0x62];
         if (defaultChar >= count || breakChar >= count)
-            throw new InvalidDataException("FNT default/break characters must be relative indices within the glyph range.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var weight = U16(fnt, 0x53);
         if (weight > 1000)
-            throw new InvalidDataException("FNT weight is outside the supported 0..1000 range.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var charset = fnt[0x55];
         var encoding = CharSetEncoding(charset);
         var faceOffset = (long)U32(fnt, 0x69);
         if (!Fits(size, faceOffset, 1))
-            throw new InvalidDataException("FNT face offset is outside the resource.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var faceEnd = fnt[(int)faceOffset..].IndexOf((byte)0);
         if (faceEnd < 0)
-            throw new InvalidDataException("FNT face name is not NUL terminated.");
+            throw new ConversionRefusedException("error.fon_damaged");
         string face;
         try
         {
             face = encoding.GetString(fnt.Slice((int)faceOffset, faceEnd)).Trim();
         }
-        catch (DecoderFallbackException ex)
+        catch (DecoderFallbackException)
         {
-            throw new InvalidDataException("FNT face name cannot be decoded with its character set.", ex);
+            throw new ConversionRefusedException("error.fon_damaged");
         }
         if (face.Length == 0)
-            throw new InvalidDataException("FNT face name is empty.");
+            throw new ConversionRefusedException("error.fon_damaged");
 
         var entrySize = version == 0x0200 ? 4 : 6;
         var tableEnd = header + (long)(count + 1) * entrySize;
         if (tableEnd > size)
-            throw new InvalidDataException("FNT character table or sentinel is truncated.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var bitsOffset = (long)U32(fnt, 0x71);
         if (bitsOffset < tableEnd || bitsOffset > size)
-            throw new InvalidDataException("FNT bitmap region offset is outside the resource.");
+            throw new ConversionRefusedException("error.fon_damaged");
         var scale = FonOutlineBuilder.Scale(height);
         var glyphs = decode ? new List<FonGlyph>(count) : null;
         for (var i = 0; i < count; i++)
@@ -172,14 +176,14 @@ internal static class FonReader
             var offset = version == 0x0200 ? U16(fnt, entry + 2) : U32(fnt, entry + 2);
             var bytes = ((long)width + 7) / 8 * height;
             if ((long)width * scale > ushort.MaxValue)
-                throw new InvalidDataException($"FON glyph advance exceeds the {ushort.MaxValue}-unit TrueType limit.");
+                throw new ConversionRefusedException("error.fon_too_large", $"{ushort.MaxValue}");
             if (offset < bitsOffset || !Fits(size, offset, bytes))
-                throw new InvalidDataException($"FNT bitmap for character {first + i} is outside the resource.");
+                throw new ConversionRefusedException("error.fon_damaged");
             if (!decode)
             {
                 glyphPixels += (long)Math.Max((int)width, 1) * height;
                 if (glyphPixels > MaxGlyphPixels)
-                    throw new InvalidDataException($"FON glyph bitmap rows/pixels exceed the {MaxGlyphPixels:N0}-unit limit.");
+                    throw new ConversionRefusedException("error.fon_too_large", MaxGlyphPixels.ToString("N0", CultureInfo.InvariantCulture));
                 continue;
             }
             var pixels = new bool[height, width];
@@ -209,7 +213,7 @@ internal static class FonReader
             186 => 1257,
             163 => 1258,
             222 => 874,
-            _ => throw new NotSupportedException($"FNT character set {charset} is not a supported single-byte Windows charset.")
+            _ => throw new ConversionRefusedException("error.fon_unsupported", $"charset {charset}")
         };
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         return Encoding.GetEncoding(codePage, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
