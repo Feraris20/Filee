@@ -168,7 +168,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "इमेज से और इमेज में macOS ऐप आइकन (ICNS)।",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "TTF, OTF, WOFF, WOFF2 और EOT के बीच बदलें; FON केवल इनपुट (NE, एकरंगी, एक-बाइट)।",
+  "engine.font.description": "TTF, OTF, WOFF, WOFF2 और EOT को आपस में बदलें; Windows बिटमैप फ़ॉन्ट (FON) को भी इन फ़ॉर्मैट में बदलें।",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "AutoCAD ड्रॉइंग: DWG ↔ DXF, और दोनों से PDF, SVG और PNG।",
   "engine.model3d.name": "3D models (built-in)",

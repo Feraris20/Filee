@@ -161,7 +161,7 @@ To undo it, remove the entries in Windows Security → App & browser control →
 | **Subtitles**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | each other as UTF-8 (Korean CP949 files read correctly) |
 | **Archives**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | extract, ZIP, 7Z, TAR, TAR.GZ;<br>any files → one ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **Fonts**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE monochrome FNT v2/v3, supported single-byte charsets; input only) | TTF, OTF, WOFF, WOFF2, EOT; one file per bitmap size (one resource: no size suffix). No PE, vector or standalone FNT support |
+| **Fonts**: TTF, OTF, WOFF, WOFF2, EOT;<br>FON (Windows bitmap fonts) read | each other;<br>FON → one font per size |
 | **Data**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | each other, CSV and XLSX (tables);<br>vCard, iCalendar ↔ CSV |
 | **3D models**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>FBX read | each other, PNG preview |
 | **Geospatial vectors**: Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV with coordinates | each other and CSV / XLSX / JSON;<br>projected data (UTM, Web Mercator, Lambert, Albers) comes out as WGS 84 longitude / latitude |

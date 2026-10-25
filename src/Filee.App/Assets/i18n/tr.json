@@ -168,7 +168,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "macOS uygulama simgeleri (ICNS) ile görseller arasında dönüştürme.",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "TTF, OTF, WOFF, WOFF2 ve EOT arasında dönüştürür; FON yalnızca girdi (NE, tek renk, tek bayt).",
+  "engine.font.description": "TTF, OTF, WOFF, WOFF2 ve EOT arasında dönüştürür; Windows bitmap yazı tiplerini (FON) bu biçimlere dönüştürür.",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "AutoCAD çizimleri: DWG ↔ DXF ve her ikisinden PDF, SVG ve PNG.",
   "engine.model3d.name": "3D models (built-in)",

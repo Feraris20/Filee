@@ -175,7 +175,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "Значки приложений macOS (ICNS) из картинок и в картинки.",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "Преобразует TTF, OTF, WOFF, WOFF2 и EOT друг в друга; FON только на вход (NE, монохромный, однобайтовый).",
+  "engine.font.description": "Преобразует TTF, OTF, WOFF, WOFF2 и EOT друг в друга; преобразует растровые шрифты Windows (FON) в эти форматы.",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "Чертежи AutoCAD: DWG ↔ DXF, и оба — в PDF, SVG и PNG.",
   "engine.model3d.name": "3D models (built-in)",

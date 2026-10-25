@@ -168,7 +168,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "ไอคอนแอป macOS (ICNS) จากและเป็นรูปภาพ",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "แปลง TTF, OTF, WOFF, WOFF2 ไปมารวมถึง EOT; FON ใช้เป็นอินพุตเท่านั้น (NE, ขาวดำ, ไบต์เดียว)",
+  "engine.font.description": "แปลง TTF, OTF, WOFF, WOFF2 และ EOT ระหว่างกัน; แปลงฟอนต์บิตแมปของ Windows (FON) เป็นรูปแบบเหล่านี้ด้วย",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "แบบแปลน AutoCAD: DWG ↔ DXF และแปลงทั้งสองเป็น PDF, SVG และ PNG",
   "engine.model3d.name": "3D models (built-in)",

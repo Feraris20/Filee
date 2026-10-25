@@ -161,7 +161,7 @@ Set-ProcessMitigation -Name filee-cli.exe -Disable UserShadowStack
 | **字幕** SRT、ASS/SSA、WebVTT、SAMI（SMI）、LRC、TTML、MicroDVD、SCC | 互相转换，保存为 UTF-8（也能读取 CP949 韩文字幕） |
 | **压缩包** ZIP、ANSYS Workbench（WBPZ）、7Z、RAR、TAR、TAR.GZ、TAR.BZ2、TAR.XZ、GZ、ISO、CAB、DMG、ALZ、EGG 等 | 解压、ZIP、7Z、TAR、TAR.GZ，<br>多个文件 → 一个 ZIP |
 | **CAD** DWG、DXF | PDF、SVG、PNG、DWG ↔ DXF |
-| **字体** TTF、OTF、WOFF、WOFF2、EOT；FON（NE、单色 FNT v2/v3、支持的单字节字符集，仅输入） | 五种格式相互转换，每个尺寸输出一个文件（单资源不加尺寸后缀）；不支持 PE、矢量或独立 FNT |
+| **字体**：TTF、OTF、WOFF、WOFF2、EOT；<br>FON（Windows 位图字体）仅读取 | 相互转换；<br>FON → 每个尺寸一个文件 |
 | **数据** JSON、JSON Lines、YAML、TOML、XML<br>vCard、iCalendar | 互相转换、CSV 和 XLSX（表格数据）、<br>vCard、iCalendar ↔ CSV |
 | **3D 模型** GLB、glTF、STL、OBJ（+ MTL）、3MF、PLY，<br>FBX 仅读取 | 互相转换、PNG 预览 |
 | **地理信息（矢量）** Shapefile、GeoJSON、KML、KMZ、GPX<br>带坐标的 CSV | 互相转换、CSV / XLSX / JSON，<br>投影坐标系（UTM、Web 墨卡托、兰伯特、阿尔伯斯）会转换为 WGS 84 经纬度 |

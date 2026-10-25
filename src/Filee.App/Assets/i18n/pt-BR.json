@@ -175,7 +175,7 @@
   "engine.icns.name": "ICNS (mecanismo integrado)",
   "engine.icns.description": "Ícones de apps do macOS (ICNS) a partir de imagens e para imagens.",
   "engine.font.name": "Fontes (mecanismo integrado)",
-  "engine.font.description": "Converte entre TTF, OTF, WOFF, WOFF2 e EOT; FON somente como entrada (NE, monocromático, um byte).",
+  "engine.font.description": "Converte TTF, OTF, WOFF, WOFF2 e EOT entre si; converte fontes bitmap do Windows (FON) para esses formatos.",
   "engine.cad.name": "CAD (mecanismo integrado)",
   "engine.cad.description": "Desenhos do AutoCAD: DWG ↔ DXF, e os dois para PDF, SVG e PNG.",
   "engine.model3d.name": "Modelos 3D (mecanismo integrado)",

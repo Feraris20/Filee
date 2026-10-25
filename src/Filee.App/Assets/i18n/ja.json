@@ -168,7 +168,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "macOSアプリのアイコン（ICNS）を画像と相互変換します。",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "TTF、OTF、WOFF、WOFF2、EOTを相互変換します。FONは入力専用（NE・単色・1バイト）です。",
+  "engine.font.description": "TTF、OTF、WOFF、WOFF2、EOTを相互変換し、Windowsビットマップフォント（FON）もこれらの形式に変換します。",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "AutoCAD図面に対応します。DWGとDXFの相互変換、および両形式からPDF、SVG、PNGへの変換ができます。",
   "engine.model3d.name": "3D models (built-in)",

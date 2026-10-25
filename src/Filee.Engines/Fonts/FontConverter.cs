@@ -21,7 +21,7 @@ public sealed class FontConverter : IConverter
     ];
 
     public EngineStatus GetStatus() => EngineStatus.Available(
-        "TTF, OTF, WOFF, WOFF2, EOT; FON input only (NE, monochrome FNT v2/v3, supported single-byte charsets; no PE or vector fonts)",
+        "TTF, OTF, WOFF, WOFF2, EOT; FON (Windows bitmap fonts) read",
         EngineVersions.BuiltIn);
 
     public Task<IReadOnlyList<string>> ConvertAsync(ConversionStep step, IProgress<double>? progress, CancellationToken cancellationToken) =>

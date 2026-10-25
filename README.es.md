@@ -161,7 +161,7 @@ Para deshacerlo, quita esas entradas en Seguridad de Windows → Control de apli
 | **Subtítulos**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | entre sí, en UTF-8 (los archivos coreanos en CP949 se leen correctamente) |
 | **Archivos comprimidos**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | extraer, ZIP, 7Z, TAR, TAR.GZ;<br>cualquier conjunto de archivos → un ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **Tipografías**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE, FNT v2/v3 monocromo y juegos de un byte compatibles; solo entrada) | conversión entre los cinco formatos, un archivo por tamaño (sin sufijo si hay un solo recurso). Sin PE, fuentes vectoriales ni FNT independiente |
+| **Tipografías**: TTF, OTF, WOFF, WOFF2, EOT;<br>FON (fuentes de mapa de bits de Windows) solo lectura | conversión entre sí;<br>FON → un archivo por tamaño |
 | **Datos**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | entre sí, CSV y XLSX (tablas);<br>vCard, iCalendar ↔ CSV |
 | **Modelos 3D**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>FBX solo lectura | entre sí, vista previa en PNG |
 | **Datos geoespaciales vectoriales**: Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV con coordenadas | entre sí y a CSV / XLSX / JSON;<br>los datos proyectados (UTM, Web Mercator, Lambert, Albers) salen como longitud / latitud WGS 84 |

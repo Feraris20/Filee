@@ -168,7 +168,7 @@
   "engine.icns.name": "ICNS (integriert)",
   "engine.icns.description": "macOS-App-Symbole (ICNS) aus Bildern und in Bilder umwandeln.",
   "engine.font.name": "Schriftarten (integriert)",
-  "engine.font.description": "Schriftarten: Konvertiert TTF, OTF, WOFF, WOFF2 und EOT untereinander.",
+  "engine.font.description": "TTF, OTF, WOFF, WOFF2 und EOT untereinander konvertieren; Windows-Bitmap-Schriftarten (FON) in diese Formate umwandeln.",
   "engine.cad.name": "CAD (integriert)",
   "engine.cad.description": "AutoCAD-Zeichnungen: DWG ↔ DXF und beide in PDF, SVG und PNG.",
   "engine.model3d.name": "3D-Modelle (integriert)",

@@ -162,7 +162,7 @@ Set-ProcessMitigation -Name filee-cli.exe -Disable UserShadowStack
 | **자막**: SRT, ASS/SSA, WebVTT, SAMI(SMI), LRC, TTML, MicroDVD, SCC | 서로 변환, UTF-8로 저장(CP949 한글 자막도 깨지지 않아요) |
 | **압축 파일**: ZIP, ANSYS Workbench(WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG 등 | 압축 풀기, ZIP, 7Z, TAR, TAR.GZ;<br>여러 파일 → ZIP 하나 |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **글꼴**: TTF, OTF, WOFF, WOFF2, EOT; FON(NE 단색 FNT v2/v3·지원 단일 바이트, 입력 전용) | 다섯 형식으로 변환, 비트맵 크기마다 파일 하나(리소스 하나면 크기 접미사 없음). PE·벡터·독립 FNT 제외 |
+| **글꼴**: TTF, OTF, WOFF, WOFF2, EOT;<br>FON(Windows 비트맵 글꼴)은 읽기 | 서로 변환;<br>FON → 크기마다 글꼴 하나 |
 | **데이터**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | 서로 변환, CSV·XLSX(표 모양 데이터);<br>vCard, iCalendar ↔ CSV |
 | **3D 모델**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>FBX는 읽기 | 서로 변환, PNG 미리보기 |
 | **지리 정보(벡터)**: Shapefile, GeoJSON, KML, KMZ, GPX<br>좌표가 있는 CSV | 서로 변환, CSV·XLSX·JSON;<br>투영 좌표계(UTM, 웹 메르카토르, 람베르트, 알버스)는 WGS 84 경위도로 변환 |

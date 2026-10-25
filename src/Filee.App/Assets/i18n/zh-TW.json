@@ -175,7 +175,7 @@
   "engine.icns.name": "ICNS (built-in)",
   "engine.icns.description": "macOS 應用程式圖示（ICNS）與圖片互轉。",
   "engine.font.name": "Fonts (built-in)",
-  "engine.font.description": "TTF、OTF、WOFF、WOFF2 和 EOT 相互轉換；FON 僅作輸入（NE、單色、單位元組）。",
+  "engine.font.description": "TTF、OTF、WOFF、WOFF2 和 EOT 相互轉換；將 Windows 點陣字型（FON）轉換為這些格式。",
   "engine.cad.name": "CAD (built-in)",
   "engine.cad.description": "AutoCAD 圖紙：DWG ↔ DXF，並可轉為 PDF、SVG 和 PNG。",
   "engine.model3d.name": "3D models (built-in)",

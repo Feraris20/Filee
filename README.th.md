@@ -161,7 +161,7 @@ Set-ProcessMitigation -Name filee-cli.exe -Disable UserShadowStack
 | **คำบรรยาย**: SRT, ASS/SSA, WebVTT, SAMI (SMI), LRC, TTML, MicroDVD, SCC | แปลงสลับกันเป็น UTF-8 (อ่านไฟล์ SMI/SRT เกาหลีรหัส CP949 ได้ถูกต้อง) |
 | **ไฟล์บีบอัด**: ZIP, ANSYS Workbench (WBPZ), 7Z, RAR, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, GZ, ISO, CAB, DMG, ALZ, EGG, … | แตกไฟล์, บีบอัดเป็น ZIP, 7Z, TAR, TAR.GZ;<br>รวมทุกไฟล์เป็นหนึ่ง ZIP |
 | **CAD**: DWG, DXF | PDF, SVG, PNG, DWG ↔ DXF |
-| **ฟอนต์**: TTF, OTF, WOFF, WOFF2, EOT; FON (NE, FNT v2/v3 ขาวดำ และชุดอักขระไบต์เดียวที่รองรับ; อินพุตเท่านั้น) | แปลงระหว่างห้ารูปแบบ ออกหนึ่งไฟล์ต่อขนาด (ทรัพยากรเดียวไม่เติมขนาด) ไม่รองรับ PE, เวกเตอร์ หรือ FNT เดี่ยว |
+| **ฟอนต์**: TTF, OTF, WOFF, WOFF2, EOT;<br>FON (ฟอนต์บิตแมปของ Windows) อ่านอย่างเดียว | แปลงระหว่างกัน;<br>FON → หนึ่งไฟล์ต่อขนาด |
 | **ข้อมูล**: JSON, JSON Lines, YAML, TOML, XML<br>vCard, iCalendar | แปลงสลับกันได้, CSV และ XLSX (ตาราง);<br>vCard, iCalendar ↔ CSV |
 | **โมเดล 3D**: GLB, glTF, STL, OBJ (+ MTL), 3MF, PLY;<br>อ่าน FBX | แปลงสลับกันได้, แสดงภาพตัวอย่าง PNG |
 | **ข้อมูลเวกเตอร์เชิงพื้นที่**: Shapefile, GeoJSON, KML, KMZ, GPX<br>CSV พร้อมพิกัด | แปลงสลับกันได้ และเป็น CSV / XLSX / JSON<br>โดยพิกัดโปรเจกชัน (UTM, Web Mercator, Lambert, Albers) จะถูกแปลงเป็น WGS 84 ลองจิจูด/ละติจูด |
