@@ -171,6 +171,8 @@
   "engine.model3d.description": "3Dモデル（GLB、glTF、STL、OBJ、3MF、PLY）を相互変換します。FBXから各形式への変換と、PNGプレビューの作成にも対応します。",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "地理空間ベクターデータ（GeoJSON、KML、KMZ、GPX、Shapefile、経度・緯度またはWKTのCSV）を相互変換します。\n結果はWGS 84の経度・緯度です。投影座標系のShapefile（UTM、Webメルカトル、ランベルト、アルベルス）も変換します。",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "フォルダーの内容からISOイメージを作成し、Unicode名と空のフォルダーを保持します。外部プログラムは不要です。",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "ZIP、7Z、RAR、TAR、ISOなどを展開し、ZIP、7Z、TAR.GZ形式で圧縮します（7-Zip）。",
   "engine.ebook.name": "E-books (built-in)",

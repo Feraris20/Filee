@@ -50,6 +50,7 @@ public static class EngineRegistry
         new OoxmlConverter(),
         new HwpxConverter(),
         new ArchiveConverter(),
+        new FolderIsoConverter(),
         new VectorConverter(),
         new IcnsConverter(),
         new FontConverter(),

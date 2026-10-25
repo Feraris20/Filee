@@ -178,6 +178,8 @@
   "engine.model3d.description": "GLB、glTF、STL、OBJ、3MF 和 PLY 3D 模型互相轉換，FBX 可轉換為其中任意格式，並可產生 PNG 預覽。",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "地理空間向量資料 GeoJSON、KML、KMZ、GPX、Shapefile 和 CSV（經緯度或 WKT）互相轉換。\n結果為 WGS 84 經緯度，Shapefile 的投影座標系統（UTM、Web 麥卡托、蘭伯特、阿爾伯斯）會被轉換。",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "將資料夾內容製作為 ISO 映像，保留 Unicode 名稱和空資料夾，無需外部程式。",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "解壓縮 ZIP、7Z、RAR、TAR、ISO 等，並打包為 ZIP、7Z 或 TAR.GZ（7-Zip）。",
   "engine.ebook.name": "E-books (built-in)",

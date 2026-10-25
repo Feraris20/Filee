@@ -178,6 +178,8 @@
   "engine.model3d.description": "Modelos 3D: GLB, glTF, STL, OBJ, 3MF e PLY entre si, FBX para qualquer um deles, e uma prévia em PNG.",
   "engine.geo.name": "Dados geoespaciais vetoriais (mecanismo integrado)",
   "engine.geo.description": "Dados vetoriais geoespaciais: GeoJSON, KML, KMZ, GPX, Shapefile e CSV (longitude/latitude ou WKT) entre si.\nOs resultados são longitude/latitude em WGS 84; Shapefiles projetados (UTM, Web Mercator, Lambert, Albers) são convertidos.",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "Cria imagens ISO do conteúdo de pastas, preservando nomes Unicode e pastas vazias. Não requer programa externo.",
   "engine.archive.name": "Arquivos compactados (7-Zip)",
   "engine.archive.description": "Extrai ZIP, 7Z, RAR, TAR, ISO e mais, e compacta ZIP, 7Z ou TAR.GZ (7-Zip).",
   "engine.ebook.name": "Livros digitais (mecanismo integrado)",

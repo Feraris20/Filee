@@ -171,6 +171,8 @@
   "engine.model3d.description": "التحويل بين النماذج ثلاثية الأبعاد: GLB وglTF وSTL وOBJ و3MF وPLY، وتحويل FBX إلى أي منها، وإنشاء معاينة PNG.",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "التحويل بين البيانات الجغرافية المتجهية: GeoJSON وKML وKMZ وGPX وShapefile وCSV (خطوط طول وعرض أو WKT).\nتُحفَظ النتائج بخطوط طول وعرض وفق WGS 84؛ وتُحوَّل ملفات Shapefile ذات الإحداثيات المسقطة (UTM وWeb Mercator وLambert وAlbers).",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "ينشئ صور ISO من محتويات المجلدات، مع الاحتفاظ بأسماء Unicode والمجلدات الفارغة. لا يتطلب برنامجًا خارجيًا.",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "استخراج ZIP و7Z وRAR وTAR وISO وغيرها، وإنشاء ZIP و7Z وTAR.GZ باستخدام 7-Zip.",
   "engine.ebook.name": "E-books (built-in)",

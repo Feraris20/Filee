@@ -42,7 +42,7 @@ internal static class DraggedFiles
 
     /// <summary>
     /// Local file and folder paths in the drag (virtual items are ignored). A shortcut counts as the file or folder it
-    /// points to. Folders go into "Compress into one archive" like on the command line (issue #186); other presets
+    /// points to. Folders go into ISO images and "Compress into one archive" like on the command line; other presets
     /// leave them out. A trailing separator is removed, and a drive or the file system root is ignored.
     /// </summary>
     public static IReadOnlyList<string> Local(IDataTransfer data) =>

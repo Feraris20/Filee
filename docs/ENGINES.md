@@ -1280,6 +1280,12 @@ bundled with the installer), never a 7-Zip installed on the PC. It runs as a sep
 | ALZ (ALZip) | Filee: store, deflate and ALZip's bzip2 variant | — |
 | EGG (ALZip) | Filee: store, deflate, bzip2, LZMA (decoded by 7-Zip); several blocks per file | — |
 
+- **Folder → ISO** (engine `iso`) writes the selected folder's contents at the disc root, without adding the folder
+  name as another level. Choose ISO on the archive toolbar, or use `filee convert "folder" --to iso`. Several
+  folders produce separate images. No external engine is required. Links inside a folder are skipped; a linked
+  source folder is refused. Dots in folder names are preserved in the output name. Existing destinations follow
+  the preset's rename, skip or overwrite rule, and an old destination inside the source is excluded from the image.
+  This direct-only route does not become an intermediate step for other conversions.
 - **ISO output** uses DiscUtils.Iso9660 (MIT), in-process, to write a data disc with ISO 9660 and Joliet Unicode names.
   Files are streamed, empty directories and timestamps are retained, and the image replaces its destination only
   after completion. Cancellation or failure removes the temporary image. ISO output is uncompressed: archive

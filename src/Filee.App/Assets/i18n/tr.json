@@ -171,6 +171,8 @@
   "engine.model3d.description": "3B modeller: GLB, glTF, STL, OBJ, 3MF ve PLY arasında dönüştürme; FBX'ten bunların tümüne ve PNG önizlemesine dönüştürme.",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "Coğrafi vektör verisi: GeoJSON, KML, KMZ, GPX, Shapefile ve CSV (enlem/boylam veya WKT) arasında dönüştürme.\nSonuçlar WGS 84 enlem/boylamıdır; projeksiyonlu Shapefile'lar (UTM, Web Mercator, Lambert, Albers) dönüştürülür.",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "Klasör içeriklerinden Unicode adlarını ve boş klasörleri koruyarak ISO görüntüleri oluşturur. Harici program gerektirmez.",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "ZIP, 7Z, RAR, TAR, ISO ve diğer arşivleri açar; ZIP, 7Z veya TAR.GZ oluşturur (7-Zip).",
   "engine.ebook.name": "E-books (built-in)",

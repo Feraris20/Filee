@@ -171,6 +171,8 @@
   "engine.model3d.description": "थ्रीडी मोडलहरू: GLB, glTF, STL, OBJ, 3MF र PLY एकअर्कामा, FBX यीमध्ये कुनैमा पनि, र PNG पूर्वावलोकन।",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "भौगोलिक भेक्टर डाटा: GeoJSON, KML, KMZ, GPX, Shapefile र CSV (देशान्तर/अक्षांश वा WKT) एकअर्कामा।\nपरिणामहरू WGS 84 देशान्तर/अक्षांशमा हुन्छन्; प्रोजेक्टेड Shapefile (UTM, Web Mercator, Lambert, Albers) रूपान्तरण गरिन्छ।",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "फोल्डरको सामग्रीबाट ISO छवि बनाउँछ, Unicode नाम र खाली फोल्डरहरू सुरक्षित राख्छ। बाह्य प्रोग्राम आवश्यक पर्दैन।",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "ZIP, 7z, TAR, GZ र अन्य अभिलेखहरू अनप्याक र सिर्जना गर्दछ।",
   "engine.ebook.name": "E-books (built-in)",

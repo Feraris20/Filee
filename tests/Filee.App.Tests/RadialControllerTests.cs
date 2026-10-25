@@ -60,7 +60,7 @@ public class RadialControllerTests
     }
 
     [Fact]
-    public void Folders_only_go_into_one_archive()
+    public void Folders_go_into_one_archive_or_iso_images()
     {
         var folder = Directory.CreateTempSubdirectory("filee-donut-folder-").FullName;
         try
@@ -70,6 +70,7 @@ public class RadialControllerTests
 
             // Issue #186: a dragged folder goes into "Compress into one archive"; other presets take only the files.
             Assert.Equal([folder, file], RadialController.SourcesFor(zip, [folder, file]));
+            Assert.Equal([folder, file], RadialController.SourcesFor(new Preset { TargetFormat = "iso" }, [folder, file]));
             Assert.Equal([file], RadialController.SourcesFor(new Preset { TargetFormat = "jpg" }, [folder, file]));
             Assert.Empty(RadialController.SourcesFor(new Preset { TargetFormat = "zip" }, [folder]));
         }

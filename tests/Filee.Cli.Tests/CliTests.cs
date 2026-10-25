@@ -33,6 +33,24 @@ public sealed class CliTests : IDisposable
     }
 
     [Fact]
+    public async Task Folder_contents_convert_to_iso_from_the_command_line()
+    {
+        var folder = Directory.CreateDirectory(Path.Combine(_folder, "photos.jpg")).FullName;
+        var nested = Directory.CreateDirectory(Path.Combine(folder, "한글")).FullName;
+        Directory.CreateDirectory(Path.Combine(folder, "empty"));
+        await File.WriteAllTextAsync(Path.Combine(nested, "notes.txt"), "folder ISO", TestContext.Current.CancellationToken);
+        var (code, _, errors) = await Run("convert", folder + Path.DirectorySeparatorChar, "--to", "iso");
+        Assert.Equal(Cli.Success, code);
+        Assert.Equal("", errors);
+        using var stream = File.OpenRead(folder + ".iso");
+        using var reader = new DiscUtils.Iso9660.CDReader(stream, true);
+        Assert.True(reader.DirectoryExists("empty"));
+        Assert.False(reader.DirectoryExists("photos.jpg"));
+        using var text = new StreamReader(reader.OpenFile(@"한글\notes.txt", FileMode.Open));
+        Assert.Equal("folder ISO", await text.ReadToEndAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task Converts_files_and_wildcards_into_an_output_folder()
     {
         Png("a.png");

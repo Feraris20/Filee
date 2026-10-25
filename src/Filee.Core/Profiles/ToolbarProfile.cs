@@ -73,7 +73,11 @@ public static class ProfileSelector
     /// </summary>
     public static ToolbarProfile? Select(IReadOnlyList<ToolbarProfile> profiles, IEnumerable<string> filePaths)
     {
-        var extensions = filePaths
+        var paths = filePaths.ToList();
+        // Folder operations live beside archive operations. Do not claim ordinary extensionless files for them.
+        if (paths.Count > 0 && paths.All(Directory.Exists) && profiles.FirstOrDefault(p => p.Id == "archives") is { } archives)
+            return archives;
+        var extensions = paths
             .Select(FormatRegistry.ExtensionOf)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();

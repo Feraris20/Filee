@@ -171,6 +171,8 @@
   "engine.model3d.description": "3D-Modelle: Konvertiert GLB, glTF, STL, OBJ, 3MF und PLY untereinander, FBX in jedes dieser Formate und erstellt eine PNG-Vorschau.",
   "engine.geo.name": "Vektor-Geodaten (integriert)",
   "engine.geo.description": "Vektor-Geodaten: Konvertiert GeoJSON, KML, KMZ, GPX, Shapefile und CSV (Längen-/Breitengrad oder WKT) untereinander.\nErgebnisse verwenden WGS-84-Längen- und Breitengrade. Projizierte Shapefiles (UTM, Web Mercator, Lambert, Albers) werden umgerechnet.",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "Erstellt ISO-Abbilder aus Ordnerinhalten mit Unicode-Dateinamen und leeren Ordnern. Kein externes Programm erforderlich.",
   "engine.archive.name": "Archive (7-Zip)",
   "engine.archive.description": "Entpackt ZIP, 7Z, RAR, TAR, ISO und weitere Formate und erstellt ZIP, 7Z oder TAR.GZ (7-Zip).",
   "engine.ebook.name": "E-Books (integriert)",

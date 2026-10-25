@@ -178,6 +178,8 @@
   "engine.model3d.description": "Modele 3D: GLB, glTF, STL, OBJ, 3MF i PLY między sobą, FBX do każdego z nich oraz podgląd PNG.",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "Wektorowe dane geoprzestrzenne: GeoJSON, KML, KMZ, GPX, Shapefile i CSV (długość/szerokość lub WKT) wzajemnie.\nWynik to długość i szerokość WGS 84; układy rzutowane w Shapefile (UTM, Web Mercator, Lambert, Albers) są przeliczane.",
+  "engine.iso.name": "ISO (DiscUtils)",
+  "engine.iso.description": "Tworzy obrazy ISO z zawartości folderów, zachowując nazwy Unicode i puste foldery. Nie wymaga zewnętrznego programu.",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "Rozpakowuje ZIP, 7Z, RAR, TAR, ISO i inne, pakuje do ZIP, 7Z lub TAR.GZ (7-Zip).",
   "engine.ebook.name": "E-books (built-in)",

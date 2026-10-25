@@ -389,11 +389,10 @@ public sealed class RadialController(
     }
 
     /// <summary>
-    /// What <paramref name="preset"/> converts of <paramref name="files"/>: folders only go into "Compress into one
-    /// archive"; any other preset converts the files beside them (issue #186).
+    /// Folders go into ISO images or "Compress into one archive"; other presets take only the files beside them.
     /// </summary>
     internal static IReadOnlyList<string> SourcesFor(Preset preset, IReadOnlyList<string> files) =>
-        preset.PacksIntoOneArchive ? files : [.. files.Where(path => !Directory.Exists(path))];
+        preset.PacksIntoOneArchive || preset.TargetFormat == "iso" ? files : [.. files.Where(path => !Directory.Exists(path))];
 
     // ───────── Progress ring ─────────
 

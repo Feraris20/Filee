@@ -6,7 +6,7 @@ namespace Filee.Core.Formats;
 /// <summary>Lookup table of every format Filee knows about.</summary>
 public static class FormatRegistry
 {
-    /// <summary>Pseudo format of the "Extract" preset: the output is a folder with the archive's files.</summary>
+    /// <summary>Folder inputs and the output of the "Extract" preset.</summary>
     public const string Folder = "folder";
 
     /// <summary>All known formats. Order is the order shown in format pickers.</summary>
@@ -355,8 +355,8 @@ public static class FormatRegistry
     public static FileFormat? FindByExtension(string extension) =>
         extension.TrimStart('.') is { Length: > 0 } ext ? ByExtension.GetValueOrDefault(ext) : null;
 
-    /// <summary>Detects the format of a file from its extension, or <c>null</c> if it is not supported.</summary>
-    public static FileFormat? Detect(string path) => FindByExtension(ExtensionOf(path));
+    /// <summary>Detects folders, otherwise the file's format from its extension, or <c>null</c> if unsupported.</summary>
+    public static FileFormat? Detect(string path) => Directory.Exists(path) ? Get(Folder) : FindByExtension(ExtensionOf(path));
 
     /// <summary>
     /// The extension of <paramref name="path"/> without the dot, including known two-part extensions
@@ -364,6 +364,8 @@ public static class FormatRegistry
     /// </summary>
     public static string ExtensionOf(string path)
     {
+        if (Directory.Exists(path))
+            return "";
         var name = Path.GetFileName(path);
         foreach (var compound in CompoundExtensions)
         {
@@ -377,6 +379,8 @@ public static class FormatRegistry
     /// <summary>The file name without its (possibly two-part) extension: "backup.tar.gz" → "backup".</summary>
     public static string NameWithoutExtension(string path)
     {
+        if (Directory.Exists(path))
+            return Path.GetFileName(Path.TrimEndingDirectorySeparator(path));
         var name = Path.GetFileName(path);
         var extension = ExtensionOf(name);
         return extension.Length == 0 ? name : name[..^(extension.Length + 1)];
