@@ -1,0 +1,24 @@
+{
+  "version": "3.02a10",
+  "udfRevision": "1.02",
+  "source": {
+    "url": "https://downloads.sourceforge.net/project/cdrtfe/tools/source/cdrtools/schily-2021-09-18.tar.bz2",
+    "sha256": "7C93F43D22C6E3DE0EAFE018CEB26DDD5CC6C543DC301F307D1E6CA313248AA4",
+    "file": "schily-2021-09-18.tar.bz2"
+  },
+  "windows": {
+    "url": "https://downloads.sourceforge.net/project/cdrtfe/tools/binaries/cdrtools/cdrtools-3.02a10-bin-win32.rar",
+    "sha256": "4D6B68E50E26F5826A6B6286A927570457178257D4005F5C5BD8615593F58D02",
+    "file": "cdrtools-3.02a10-bin-win32.rar"
+  },
+  "windowsRuntime": {
+    "url": "https://downloads.sourceforge.net/project/cdrtfe/tools/binaries/cygwin/cygwin1.dll_2.3.1.rar",
+    "sha256": "8DBE90F7050AE53F6EDA19CC4A4A6E1057903A763ECEE189F69BFA0F09DB05EB",
+    "file": "cygwin1.dll_2.3.1.rar"
+  },
+  "windowsRuntimeSource": {
+    "url": "https://downloads.sourceforge.net/project/cdrtfe/tools/source/cygwin/cygwin-2.3.1-1-src.tar.xz",
+    "sha256": "98256954508E09E1BAA28C6088FAB054F67884C9041FDA37AB4959B17C81EC7D",
+    "file": "cygwin-2.3.1-1-src.tar.xz"
+  }
+}

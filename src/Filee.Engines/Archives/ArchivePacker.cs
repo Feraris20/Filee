@@ -1,6 +1,7 @@
 // Writes archives. ZIP, TAR and TAR.GZ are written in-process (System.IO.Compression / System.Formats.Tar), so file
 // names are exactly what Filee chooses: UTF-8 in ZIP (with the language encoding flag), PAX headers in TAR. 7Z, the
 // bzip2 / xz TAR variants and single-file GZ / BZ2 / XZ are written by the bundled 7-Zip.
+// ISO images use DiscUtils with either plain ISO 9660 or the Unicode-preserving Joliet extension.
 
 using System.Formats.Tar;
 using System.IO.Compression;
@@ -29,7 +30,8 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
     /// never leaves a broken archive (or replaces an existing one).
     /// </summary>
     public async Task PackAsync(IReadOnlyList<PackItem> items, string outputPath, string format, ArchiveLevel level,
-        string workDirectory, IProgress<double>? progress, CancellationToken cancellationToken)
+        string workDirectory, IProgress<double>? progress, CancellationToken cancellationToken,
+        IsoStandard isoStandard = IsoStandard.Iso9660Joliet)
     {
         var dir = Path.GetDirectoryName(Path.GetFullPath(outputPath))!;
         Directory.CreateDirectory(dir);
@@ -39,7 +41,11 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
             switch (format)
             {
                 case "iso":
-                    await Task.Run(() => WriteIso(items, temp, outputPath, progress, cancellationToken), cancellationToken);
+                    if (isoStandard == IsoStandard.Udf102)
+                        await MkisofsWriter.WriteAsync(Expand(items).Select(f => new UdfItem(f.Path, f.EntryName, f.IsFolder, f.Length, f.Modified)),
+                            temp, outputPath, workDirectory, progress, cancellationToken);
+                    else
+                        await Task.Run(() => WriteIso(items, temp, outputPath, isoStandard, progress, cancellationToken), cancellationToken);
                     break;
                 case "zip":
                     await Task.Run(() => WriteZip(items, temp, level, progress, cancellationToken), cancellationToken);
@@ -88,9 +94,16 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
         }
     }
 
-    private static void WriteIso(IReadOnlyList<PackItem> items, string path, string destination, IProgress<double>? progress, CancellationToken cancellationToken)
+    private static void WriteIso(IReadOnlyList<PackItem> items, string path, string destination, IsoStandard standard,
+        IProgress<double>? progress, CancellationToken cancellationToken)
     {
-        var builder = new CDBuilder { UseJoliet = true, VolumeIdentifier = "FILEE" };
+        var joliet = standard switch
+        {
+            IsoStandard.Iso9660Joliet => true,
+            IsoStandard.Iso9660 => false,
+            _ => throw new NotSupportedException($"Unsupported ISO standard: {standard}."),
+        };
+        var builder = new CDBuilder { UseJoliet = joliet, VolumeIdentifier = "FILEE" };
         foreach (var file in Expand(items))
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -98,8 +111,10 @@ internal sealed class ArchivePacker(SevenZip? sevenZip)
             if (Filee.Core.Platform.FileSystemPaths.Comparer.Equals(Path.GetFullPath(file.Path), Path.GetFullPath(destination)))
                 continue;
             // Joliet stores at most 64 UTF-16 characters per name. Reject rather than silently truncate names.
-            if (file.EntryName.Split('/').Any(part => part.Length > 64 || part.Contains(';')))
+            if (joliet && file.EntryName.Split('/').Any(part => part.Length > 64))
                 throw new NotSupportedException($"ISO (Joliet) cannot preserve the name '{file.EntryName}': names must be at most 64 characters and contain no semicolons.");
+            if (file.EntryName.Contains(';'))
+                throw new NotSupportedException($"ISO names cannot contain semicolons: '{file.EntryName}'.");
             if (file.Length > uint.MaxValue)
                 throw new NotSupportedException($"ISO cannot store '{file.EntryName}': an individual file must be smaller than 4 GiB.");
             var name = file.EntryName.Replace('/', '\\');

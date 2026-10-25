@@ -58,6 +58,8 @@ Bundled with the installer:
 |---|---|---|
 | rhwp | MIT | https://github.com/edwardkim/rhwp |
 | 7-Zip (console: `7z.exe`, `7z.dll`) | GNU LGPL-2.1-or-later; parts of `7z.dll`: LGPL with the unRAR license restriction, BSD-3-Clause, BSD-2-Clause | https://www.7-zip.org |
+| mkisofs 3.02a10 (separate program; UDF images) | GPL-2.0-only; supporting Schily libraries: CDDL-1.0 and the source notices | https://cdrtools.sourceforge.net/ |
+| Cygwin 2.3.1 runtime (Windows mkisofs only) | GPL-3.0-or-later with the Cygwin additional permissions | https://www.cygwin.com/ |
 | Microsoft Visual C++ Redistributable (Windows: next to `Filee.exe` and `rhwp.exe`, conda-forge `vc14_runtime`) | Microsoft Visual C++ Redistributable license | https://github.com/conda-forge/vc-feedstock |
 
 The Linux packages contain an rhwp built by Filee's CI from the unmodified source of the same release (tag `v0.8.7`,
@@ -69,6 +71,12 @@ runs on older Linux systems than rhwp's own Linux build. It is under the same MI
 decompression code in `7z.dll` is under the unRAR license restriction: it may be used to unpack RAR archives, but not
 to develop a RAR (WinRAR) compatible archiver or to re-create the RAR compression algorithm. Filee only reads RAR
 files. Source code: https://github.com/ip7z/7zip.
+
+`engines/mkisofs` contains mkisofs and its license texts. Complete matching sources, including the Windows
+Cygwin runtime sources and packaging scripts, are shipped in `engines/mkisofs/sources`. The exact downloads
+and SHA-256 checksums are in `build/mkisofs.json`. Windows binaries are published by the cdrtfe project
+(https://cdrtfe.sourceforge.io/tools/index_en.html). Linux and macOS build the pinned Schily source natively;
+Linux release builds use Ubuntu 22.04 for glibc compatibility. mkisofs is invoked as a separate process.
 
 Downloaded from their official release pages when the user chooses to install them
 (pinned in `src/Filee.Engines/Infrastructure/engines.json`):

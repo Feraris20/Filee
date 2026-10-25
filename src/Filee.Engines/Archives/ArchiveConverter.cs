@@ -67,7 +67,7 @@ public sealed class ArchiveConverter : IConverter, IFileCombiner
             if (output is null)
                 return [];
             await new ArchivePacker(sevenZip).PackAsync(items, output, step.To, step.Preset.Archive.Level, scratch,
-                Scaled(progress, 0.5, 1), cancellationToken);
+                Scaled(progress, 0.5, 1), cancellationToken, step.Preset.Iso.Standard);
             progress?.Report(1);
             return [output];
         }
@@ -115,7 +115,7 @@ public sealed class ArchiveConverter : IConverter, IFileCombiner
     {
         var sevenZip = ArchivePacker.BuiltInFormats.Contains(format) ? null : _sevenZip ??= SevenZip.Locate();
         await new ArchivePacker(sevenZip).PackAsync(UniqueEntries(inputPaths), outputPath, format, preset.Archive.Level,
-            workDirectory, progress, cancellationToken);
+            workDirectory, progress, cancellationToken, preset.Iso.Standard);
         progress?.Report(1);
     }
 

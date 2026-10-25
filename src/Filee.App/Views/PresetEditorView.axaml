@@ -286,6 +286,16 @@
       </StackPanel>
     </Border>
 
+    <Border x:Name="IsoCard" Classes="card" IsVisible="{Binding ShowIso}" Padding="14">
+      <StackPanel Spacing="10">
+        <TextBlock Classes="h2" Text="{DynamicResource presets.group.iso}" />
+        <TextBlock Classes="label" Text="{DynamicResource presets.iso_standard}" />
+        <ComboBox x:Name="IsoStandardSelector" ItemsSource="{Binding IsoStandards}" SelectedItem="{Binding IsoStandardChoice}" HorizontalAlignment="Stretch" AutomationProperties.Name="{DynamicResource presets.iso_standard}" />
+        <TextBlock Classes="caption" Text="{DynamicResource presets.iso_standard_hint}" TextWrapping="Wrap" IsVisible="{Binding !ShowUdfHint}" />
+        <TextBlock Classes="caption" Text="{DynamicResource presets.iso_udf_hint}" TextWrapping="Wrap" IsVisible="{Binding ShowUdfHint}" />
+      </StackPanel>
+    </Border>
+
     <!-- Tracing options (raster image → SVG, and DXF / DWG through SVG) -->
     <Border x:Name="TraceCard" Classes="card" IsVisible="{Binding ShowTrace}" Padding="14">
       <StackPanel Spacing="10">

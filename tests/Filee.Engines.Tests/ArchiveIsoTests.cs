@@ -27,6 +27,17 @@ public class ArchiveIsoTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Theory]
     [MemberData(nameof(Formats))]
     public async Task Every_supported_archive_round_trips_through_iso(string format)
+        => await RoundTripAsync(format, IsoStandard.Iso9660Joliet);
+
+    [Theory]
+    [MemberData(nameof(Formats))]
+    public async Task Every_supported_archive_round_trips_through_udf(string format)
+    {
+        Assert.SkipUnless(MkisofsWriter.Locate() is not null, "Bundled mkisofs required");
+        await RoundTripAsync(format, IsoStandard.Udf102);
+    }
+
+    private async Task RoundTripAsync(string format, IsoStandard standard)
     {
         Assert.SkipUnless(SevenZipExe is not null, "Bundled 7-Zip required");
         var dir = fx.NewFolder();
@@ -36,12 +47,15 @@ public class ArchiveIsoTests(EngineFixture fx) : IClassFixture<EngineFixture>
         var unpacked = await new ArchiveExtractor(SevenZip.Locate()).ExtractAsync(source, SourceFormat(format), scratch, Ct);
         var expected = Snapshot(unpacked);
         Assert.NotEmpty(expected);
-        var job = await fx.ConvertAsync([source], new Preset { TargetFormat = "iso" });
+        var job = await fx.ConvertAsync([source], new Preset { TargetFormat = "iso", Iso = { Standard = standard } });
         Assert.True(job.State == JobState.Completed, string.Join("; ", job.Files.Select(f => f.ErrorDetail)));
         var iso = Assert.Single(job.Outputs);
         Assert.EndsWith(".iso", iso);
         var actual = Path.Combine(dir, "actual");
-        await Run7zAsync("x", "-y", "-o" + actual, iso);
+        if (standard == IsoStandard.Udf102)
+            await Run7zAsync("x", "-tudf", "-y", "-o" + actual, iso);
+        else
+            await Run7zAsync("x", "-y", "-o" + actual, iso);
         Assert.Equal(expected, Snapshot(actual));
         Assert.Equal(original, await File.ReadAllBytesAsync(source, Ct));
     }
@@ -120,6 +134,21 @@ public class ArchiveIsoTests(EngineFixture fx) : IClassFixture<EngineFixture>
         Assert.Equal(JobState.Failed, job.State);
         Assert.Empty(job.Outputs);
         Assert.Equal(["invalid.zip"], Directory.GetFileSystemEntries(dir).Select(Path.GetFileName));
+    }
+
+    [Theory]
+    [InlineData(IsoStandard.Iso9660)]
+    [InlineData(IsoStandard.Iso9660Joliet)]
+    [InlineData(IsoStandard.Udf102)]
+    public async Task Archive_conversion_honours_the_selected_standard(IsoStandard standard)
+    {
+        Assert.SkipUnless(SevenZipExe is not null, "Bundled 7-Zip required");
+        if (standard == IsoStandard.Udf102)
+            Assert.SkipUnless(MkisofsWriter.Locate() is not null, "Bundled mkisofs required");
+        var source = await CreateSourceAsync(fx.NewFolder(), "zip");
+        var job = await fx.ConvertAsync([source], new Preset { TargetFormat = "iso", Iso = { Standard = standard } });
+        Assert.Equal(JobState.Completed, job.State);
+        IsoStandardTests.AssertFilesystem(Assert.Single(job.Outputs), standard);
     }
 
     private async Task AssertLockedAsync(string archive)

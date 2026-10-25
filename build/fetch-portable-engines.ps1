@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory)][ValidateSet('linux-x64', 'linux-arm64', 'osx-x64', 'osx-arm64')][string]$Runtime,
     [Parameter(Mandatory)][string]$Destination,
-    [ValidateSet('rhwp', '7zip')][string[]]$Only = @('rhwp', '7zip')
+    [ValidateSet('rhwp', '7zip', 'mkisofs')][string[]]$Only = @('rhwp', '7zip', 'mkisofs'),
+    [string]$MkisofsPreparedEngine
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,6 +16,10 @@ New-Item -ItemType Directory -Force -Path $cache, $Destination | Out-Null
 $Destination = (Resolve-Path -LiteralPath $Destination).Path
 
 foreach ($name in $Only) {
+    if ($name -eq 'mkisofs') {
+        & (Join-Path $PSScriptRoot 'build-mkisofs.ps1') -Destination $Destination -PreparedEngine $MkisofsPreparedEngine
+        continue
+    }
     $component = $components[$name]
     if (-not $component -or $component.sha256 -notmatch '^[0-9a-fA-F]{64}$') {
         throw "A pinned $name download is missing for $Runtime."

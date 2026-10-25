@@ -146,6 +146,10 @@ jobs:
         shell: pwsh
         run: ./build/fetch-engines.ps1 -Only rhwp,pandoc,7zip
 
+      - name: Prepare UDF writer
+        shell: pwsh
+        run: ./build/build-mkisofs.ps1
+
       # The UI tests on their own first, as the release runs them (there they crashed with 0xC0000005): a crash
       # names the test that was running and leaves a dump in TestResults.
       - name: Test UI on its own

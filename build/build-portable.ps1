@@ -13,7 +13,8 @@ param(
     [string]$OutputDir = (Join-Path $PSScriptRoot '../Releases'),
     [string]$SigningIdentity = '-',
     [switch]$SkipFonts,
-    [string]$RhwpOverride
+    [string]$RhwpOverride,
+    [string]$MkisofsOverride
 )
 
 $ErrorActionPreference = 'Stop'
@@ -73,13 +74,13 @@ foreach ($project in @('Filee.App', 'Filee.Cli')) {
 }
 $engines = Join-Path $publish 'engines'
 if ($RhwpOverride) {
-    & (Join-Path $PSScriptRoot 'fetch-portable-engines.ps1') -Runtime $Runtime -Destination $engines -Only 7zip
+    & (Join-Path $PSScriptRoot 'fetch-portable-engines.ps1') -Runtime $Runtime -Destination $engines -Only 7zip,mkisofs -MkisofsPreparedEngine $MkisofsOverride
     Copy-Item -LiteralPath $RhwpOverride -Destination (Join-Path $engines 'rhwp') -Recurse
     Invoke-Checked 'rhwp permissions' { chmod +x (Join-Path $engines 'rhwp/rhwp') }
     Write-Host "rhwp from $RhwpOverride"
 }
 else {
-    & (Join-Path $PSScriptRoot 'fetch-portable-engines.ps1') -Runtime $Runtime -Destination $engines
+    & (Join-Path $PSScriptRoot 'fetch-portable-engines.ps1') -Runtime $Runtime -Destination $engines -MkisofsPreparedEngine $MkisofsOverride
 }
 foreach ($name in @('Filee', 'filee-cli')) {
     $executable = Join-Path $publish $name

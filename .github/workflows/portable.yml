@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: build/.cache/linux-native/${{ matrix.rid }}
-          key: linux-native-${{ matrix.rid }}-ubuntu-22.04-${{ hashFiles('build/build-linux-native.py') }}
+          key: linux-native-${{ matrix.rid }}-ubuntu-22.04-${{ hashFiles('build/build-linux-native.py', 'build/build-mkisofs.ps1', 'build/mkisofs.json') }}
 
       # rhwp's default features are pure Rust: a C toolchain for the linker and build scripts is enough.
       - name: Build dependencies
@@ -92,7 +92,13 @@ jobs:
         if: steps.native-cache.outputs.cache-hit != 'true'
         run: python3 build/build-linux-native.py rhwp --output "$NATIVE_OUT/rhwp" --work "$RUNNER_TEMP/rhwp"
 
+      - name: Build UDF writer on Ubuntu 22.04
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: ./build/build-mkisofs.ps1 -Destination $env:NATIVE_OUT
+
       - name: Check glibc requirements
+        shell: bash
         run: python3 build/check-elf-glibc.py --max 2.35 --needed "$NATIVE_OUT"
 
       - name: Upload native builds
@@ -152,7 +158,11 @@ jobs:
 
       - name: Build and test native projects
         run: |
-          ./build/fetch-portable-engines.ps1 -Runtime '${{ matrix.rid }}' -Destination engines
+          $udf = @{}
+          if ($IsLinux) {
+            $udf = @{ MkisofsPreparedEngine = Join-Path $env:RUNNER_TEMP 'linux-native/mkisofs' }
+          }
+          ./build/fetch-portable-engines.ps1 -Runtime '${{ matrix.rid }}' -Destination engines @udf
           dotnet build Filee.slnx -c Release
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $projects = @('Filee.Core.Tests', 'Filee.Platform.Tests', 'Filee.Engines.Tests', 'Filee.Cli.Tests', 'Filee.App.Tests')
@@ -178,7 +188,10 @@ jobs:
         run: |
           $native = @{}
           if ($IsLinux) {
-            $native = @{ RhwpOverride = Join-Path $env:RUNNER_TEMP 'linux-native/rhwp' }
+            $native = @{
+              RhwpOverride = Join-Path $env:RUNNER_TEMP 'linux-native/rhwp'
+              MkisofsOverride = Join-Path $env:RUNNER_TEMP 'linux-native/mkisofs'
+            }
           }
           ./build/build-portable.ps1 -Runtime '${{ matrix.rid }}' -Version $env:PACKAGE_VERSION -SkipFonts @native
 

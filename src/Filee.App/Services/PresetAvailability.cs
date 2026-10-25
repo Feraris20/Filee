@@ -88,6 +88,9 @@ public sealed class PresetAvailability
     private PresetJudgement Evaluate(Preset preset, IReadOnlyList<FileFormat> formats,
         Func<RoutePlanner> installedPlanner, Func<Func<RoutePlanner, bool>, EnginePackageState?> packageEnabling)
     {
+        if (preset.TargetFormat == "iso" && preset.Iso.Standard == IsoStandard.Udf102
+            && Filee.Engines.Archives.MkisofsWriter.Locate() is null)
+            return new(PresetUse.Unusable, _loc["engine.reason.not_installed"]);
         if (preset.IsClipTool)
         {
             // Any video among the files: the others are left out when the clip window opens.
