@@ -11,6 +11,9 @@ internal static class FonOutlineBuilder
     private readonly record struct Corner(int X, int Y);
     private readonly record struct Edge(Corner From, Corner To);
 
+    /// <summary>Scales the strike's pixel height into TrueType font units.</summary>
+    internal static int Scale(int height) => height <= 1024 ? 1024 / height : 1;
+
     public static SfntFont Build(FonStrike strike, int resourceCount = 1, int sameHeightOrdinal = 1) =>
         Build(strike, CancellationToken.None, resourceCount, sameHeightOrdinal);
 
@@ -24,7 +27,7 @@ internal static class FonOutlineBuilder
         if (resourceCount < 1 || sameHeightOrdinal < 1 || strike.Glyphs.Count is < 1 or > 65534)
             throw new InvalidDataException("FON resource or glyph count exceeds TrueType limits.");
         var height = strike.PixelHeight;
-        var scale = height <= 1024 ? 1024 / height : 1;
+        var scale = Scale(height);
         var upem = checked(height * scale);
         if (upem is < 16 or > 16384)
             throw new InvalidDataException("FON pixel height exceeds TrueType units-per-em limits.");

@@ -867,18 +867,57 @@ public class FonTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Fact]
     public async Task Aliased_glyphs_over_filewide_pixel_limit_fail_without_outputs()
     {
-        var data = Container(AliasedFnt(2048, 8), AliasedFnt(2049, 8));
+        var data = Container(AliasedFnt(16, 1024), AliasedFnt(17, 1024));
         var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
         Assert.Contains("unit limit", error.Message);
         Assert.Contains($"{FonReader.MaxGlyphPixels:N0}", error.Message);
 
-        await AssertNothingWrittenAsync(data, ["Name-8px.ttf", "Name-8px-2.ttf"], FileState.Failed, "unit limit");
+        await AssertNothingWrittenAsync(data, ["Name-1024px.ttf", "Name-1024px-2.ttf"], FileState.Failed, "unit limit");
+    }
+
+    [Fact]
+    public void Glyph_advance_above_65535_is_rejected_before_decoding()
+    {
+        var data = FonBuilder.Container([AliasedFnt(64, 1, 1)]);
+
+        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
+        Assert.Contains("65535", error.Message);
+    }
+
+    [Fact]
+    public void Blank_glyph_with_advance_above_signed_coordinate_limit_converts()
+    {
+        var resource = AliasedFnt(33, 1, 2);
+        BinaryPrimitives.WriteUInt16LittleEndian(resource.AsSpan(0x76 + 4), 0);
+        var data = FonBuilder.Container([resource]);
+        var strike = Assert.Single(FonReader.Read(data, TestContext.Current.CancellationToken));
+        var font = FontFile.Load(FontFile.Save(
+            FonOutlineBuilder.Build(strike, TestContext.Current.CancellationToken), "ttf", TestContext.Current.CancellationToken),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(33 * 1024, Advance(font, 1));
+        Assert.Null(GlyfTable.ReadAll(font)[1]);
+    }
+
+    [Fact]
+    public void Shared_large_bitmap_is_refused_with_less_than_one_megabyte_allocated()
+    {
+        var data = FonBuilder.Container([AliasedFnt(4096, 1024, 224)], alignmentShift: 9);
+        Assert.Single(FonReader.Read(FonBuilder.V2Fixed(), TestContext.Current.CancellationToken));
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var error = Assert.Throws<InvalidDataException>(() => FonReader.Read(data, TestContext.Current.CancellationToken));
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.Contains("unit limit", error.Message);
+        Assert.Contains($"{FonReader.MaxGlyphPixels:N0}", error.Message);
+        Assert.True(allocated < 1_000_000, $"Reader allocated {allocated:N0} bytes.");
     }
 
     [Fact]
     public void Aliased_glyphs_at_filewide_pixel_limit_are_accepted()
     {
-        var data = Container(AliasedFnt(2048, 8), AliasedFnt(2048, 8));
+        var data = Container(AliasedFnt(16, 1024), AliasedFnt(16, 1024));
         var strikes = FonReader.Read(data, TestContext.Current.CancellationToken);
         Assert.Equal(FonReader.MaxGlyphPixels, strikes.Sum(s => s.Glyphs.Sum(g => (long)g.Width * s.PixelHeight)));
         Assert.All(strikes, s => Assert.All(s.Glyphs, g => Assert.False(g.Pixels[0, 0])));

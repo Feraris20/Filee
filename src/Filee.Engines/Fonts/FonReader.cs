@@ -162,6 +162,7 @@ internal static class FonReader
         var bitsOffset = (long)U32(fnt, 0x71);
         if (bitsOffset < tableEnd || bitsOffset > size)
             throw new InvalidDataException("FNT bitmap region offset is outside the resource.");
+        var scale = FonOutlineBuilder.Scale(height);
         var glyphs = decode ? new List<FonGlyph>(count) : null;
         for (var i = 0; i < count; i++)
         {
@@ -170,6 +171,8 @@ internal static class FonReader
             var width = U16(fnt, entry);
             var offset = version == 0x0200 ? U16(fnt, entry + 2) : U32(fnt, entry + 2);
             var bytes = ((long)width + 7) / 8 * height;
+            if ((long)width * scale > ushort.MaxValue)
+                throw new InvalidDataException($"FON glyph advance exceeds the {ushort.MaxValue}-unit TrueType limit.");
             if (offset < bitsOffset || !Fits(size, offset, bytes))
                 throw new InvalidDataException($"FNT bitmap for character {first + i} is outside the resource.");
             if (!decode)
