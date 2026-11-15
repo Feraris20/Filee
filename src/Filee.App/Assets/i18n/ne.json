@@ -877,6 +877,7 @@
   "presets.save": "सुरक्षित गर्नुहोस्",
   "presets.saved": "सुरक्षित गरियो",
   "presets.save_failed": "प्रिसेटहरू सुरक्षित गर्न सकिएन: {0}",
+  "presets.save_missing": "यो प्रिसेट अब लाइब्रेरीमा छैन। अर्को प्रिसेट छान्नुहोस्।",
   "presets.revert": "पहिलेको जस्तै बनाउनुहोस्",
   "presets.name": "नाम",
   "presets.icon": "आइकन",

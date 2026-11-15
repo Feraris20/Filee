@@ -137,6 +137,22 @@ public sealed class PresetSaveFeedbackTests
         Assert.Null(f.ViewModel.Editor);
     }
 
+    [AvaloniaFact]
+    public void A_preset_removed_from_the_library_reports_failure_without_writing_or_losing_edits()
+    {
+        using var f = new Fixture();
+        var before = File.ReadAllText(Path.Combine(f.Folder, "presets.json"));
+        f.Store.Presets.Clear();
+        f.ViewModel.Editor!.Name = "Keep these edits";
+        f.ViewModel.SaveCommand.Execute(null);
+        Assert.Equal(SaveResult.Failed, f.ViewModel.SaveResult);
+        Assert.Equal("This preset is no longer in the library. Select another preset.", f.ViewModel.SaveError);
+        Assert.Equal(f.ViewModel.SaveError, f.ViewModel.SaveStatus);
+        Assert.Equal("Keep these edits", f.ViewModel.Editor.Name);
+        Assert.Empty(f.Store.Presets);
+        Assert.Equal(before, File.ReadAllText(Path.Combine(f.Folder, "presets.json")));
+    }
+
     [AvaloniaTheory]
     [MemberData(nameof(Languages))]
     public void Save_feedback_is_translated_in_every_catalog(string language)
@@ -148,6 +164,8 @@ public sealed class PresetSaveFeedbackTests
         var failure = loc.Format("presets.save_failed", "write-error-detail");
         Assert.Contains("write-error-detail", failure);
         Assert.DoesNotContain("{0}", failure);
+        Assert.NotEqual("presets.save_missing", loc["presets.save_missing"]);
+        Assert.False(string.IsNullOrWhiteSpace(loc["presets.save_missing"]));
         if (language != "en")
             Assert.DoesNotContain("Could not save presets", failure);
     }
@@ -187,6 +205,8 @@ public sealed class PresetSaveFeedbackTests
     public async Task Button_keeps_its_size_restores_its_label_and_respects_reduced_motion(bool reducedMotion, bool failure)
     {
         using var f = new Fixture();
+        var theme = AppHost.Get<UserDataStore>().Settings.Theme;
+        var motionEnabled = Motion.Enabled;
         AppHost.Get<ThemeService>().Apply(new ThemeSettings { Mode = reducedMotion ? ThemeMode.Dark : ThemeMode.Light }, "en");
         Motion.Set(!reducedMotion);
         var page = new PresetsPage { DataContext = f.ViewModel };
@@ -231,7 +251,10 @@ public sealed class PresetSaveFeedbackTests
         finally
         {
             window.Close();
-            Motion.Set(true);
+            AppHost.Get<ThemeService>().Apply(theme, "en");
+            Motion.Set(motionEnabled);
         }
+        Assert.Equal(theme.Style, AppHost.Get<ThemeService>().CurrentStyle);
+        Assert.Equal(motionEnabled, Motion.Enabled);
     }
 }

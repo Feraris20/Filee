@@ -876,6 +876,7 @@
   "presets.save": "Хадгалах",
   "presets.saved": "Хадгаллаа",
   "presets.save_failed": "Урьдчилсан тохиргоог хадгалж чадсангүй: {0}",
+  "presets.save_missing": "Энэ урьдчилсан тохиргоо санд байхгүй болсон. Өөр тохиргоо сонгоно уу.",
   "presets.revert": "Буцаах",
   "presets.name": "Нэр",
   "presets.icon": "Дүрс",

@@ -877,6 +877,7 @@
   "presets.save": "Guardar",
   "presets.saved": "Guardado",
   "presets.save_failed": "No se pudieron guardar los ajustes preestablecidos: {0}",
+  "presets.save_missing": "Este ajuste preestablecido ya no está en la biblioteca. Selecciona otro.",
   "presets.revert": "Revertir",
   "presets.name": "Nombre",
   "presets.icon": "Icono",

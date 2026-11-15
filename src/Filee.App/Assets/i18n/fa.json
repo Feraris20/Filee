@@ -876,6 +876,7 @@
   "presets.save": "ذخیره",
   "presets.saved": "ذخیره شد",
   "presets.save_failed": "ذخیرهٔ پیش‌تنظیم‌ها ممکن نشد: {0}",
+  "presets.save_missing": "این پیش‌تنظیم دیگر در کتابخانه نیست. پیش‌تنظیم دیگری انتخاب کنید.",
   "presets.revert": "بازگردانی",
   "presets.name": "نام",
   "presets.icon": "آیکون",

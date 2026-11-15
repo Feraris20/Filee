@@ -881,6 +881,7 @@
   "presets.save": "सहेजें",
   "presets.saved": "सहेजा गया",
   "presets.save_failed": "प्रीसेट सहेजे नहीं जा सके: {0}",
+  "presets.save_missing": "यह प्रीसेट अब लाइब्रेरी में नहीं है। कोई दूसरा प्रीसेट चुनें।",
   "presets.revert": "वापस लौटाएँ",
   "presets.name": "नाम",
   "presets.icon": "आइकन",

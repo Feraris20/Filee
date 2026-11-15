@@ -892,6 +892,7 @@
   "presets.save": "저장",
   "presets.saved": "저장됨",
   "presets.save_failed": "프리셋을 저장할 수 없습니다: {0}",
+  "presets.save_missing": "이 프리셋은 더 이상 라이브러리에 없습니다. 다른 프리셋을 선택하세요.",
   "presets.revert": "되돌리기",
   "presets.name": "이름",
   "presets.icon": "아이콘",

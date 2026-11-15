@@ -896,6 +896,7 @@
   "presets.save": "Enregistrer",
   "presets.saved": "Enregistré",
   "presets.save_failed": "Impossible d’enregistrer les préréglages : {0}",
+  "presets.save_missing": "Ce préréglage n’est plus dans la bibliothèque. Sélectionnez-en un autre.",
   "presets.revert": "Rétablir",
   "presets.name": "Nom",
   "presets.icon": "Icône",

@@ -896,6 +896,7 @@
   "presets.save": "Сохранить",
   "presets.saved": "Сохранено",
   "presets.save_failed": "Не удалось сохранить предустановки: {0}",
+  "presets.save_missing": "Этой предустановки больше нет в библиотеке. Выберите другую.",
   "presets.revert": "Отменить изменения",
   "presets.name": "Название",
   "presets.icon": "Значок",

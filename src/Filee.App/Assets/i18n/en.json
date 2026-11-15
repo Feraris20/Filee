@@ -892,6 +892,7 @@
   "presets.save": "Save",
   "presets.saved": "Saved",
   "presets.save_failed": "Could not save presets: {0}",
+  "presets.save_missing": "This preset is no longer in the library. Select another preset.",
   "presets.revert": "Revert",
   "presets.name": "Name",
   "presets.icon": "Icon",

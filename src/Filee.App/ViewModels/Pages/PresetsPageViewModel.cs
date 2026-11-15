@@ -112,7 +112,11 @@ public sealed partial class PresetsPageViewModel : ObservableObject, IFitsWindow
         var original = SelectedPreset.Preset;
         var index = _store.Presets.IndexOf(original);
         if (index < 0)
+        {
+            SaveError = _loc["presets.save_missing"];
+            SaveResult = SaveResult.Failed;
             return;
+        }
         // The live library keeps the last saved preset until the write succeeds. Failed edits remain in the editor
         // for retry; Revert and switching presets still restore the saved values.
         _store.Presets[index] = _editingPreset;

@@ -877,6 +877,7 @@
   "presets.save": "Kaydet",
   "presets.saved": "Kaydedildi",
   "presets.save_failed": "Ön ayarlar kaydedilemedi: {0}",
+  "presets.save_missing": "Bu ön ayar artık kitaplıkta yok. Başka bir ön ayar seçin.",
   "presets.revert": "Geri al",
   "presets.name": "Ad",
   "presets.icon": "Simge",

@@ -876,6 +876,7 @@
   "presets.save": "সংরক্ষণ করুন",
   "presets.saved": "সংরক্ষিত হয়েছে",
   "presets.save_failed": "প্রিসেট সংরক্ষণ করা যায়নি: {0}",
+  "presets.save_missing": "এই প্রিসেটটি আর লাইব্রেরিতে নেই। অন্য একটি প্রিসেট নির্বাচন করুন।",
   "presets.revert": "পূর্বাবস্থায় আনুন",
   "presets.name": "নাম",
   "presets.icon": "আইকন",

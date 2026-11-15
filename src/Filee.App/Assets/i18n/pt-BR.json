@@ -896,6 +896,7 @@
   "presets.save": "Salvar",
   "presets.saved": "Salvo",
   "presets.save_failed": "Não foi possível salvar as predefinições: {0}",
+  "presets.save_missing": "Esta predefinição não está mais na biblioteca. Selecione outra.",
   "presets.revert": "Desfazer",
   "presets.name": "Nome",
   "presets.icon": "Ícone",

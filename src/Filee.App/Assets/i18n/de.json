@@ -877,6 +877,7 @@
   "presets.save": "Speichern",
   "presets.saved": "Gespeichert",
   "presets.save_failed": "Voreinstellungen konnten nicht gespeichert werden: {0}",
+  "presets.save_missing": "Diese Voreinstellung ist nicht mehr in der Bibliothek. Wähle eine andere aus.",
   "presets.revert": "Zurücksetzen",
   "presets.name": "Name",
   "presets.icon": "Symbol",

@@ -892,6 +892,7 @@
   "presets.save": "Lưu",
   "presets.saved": "Đã lưu",
   "presets.save_failed": "Không thể lưu các thiết lập sẵn: {0}",
+  "presets.save_missing": "Thiết lập sẵn này không còn trong thư viện. Hãy chọn thiết lập khác.",
   "presets.revert": "Hoàn nguyên",
   "presets.name": "Tên",
   "presets.icon": "Biểu tượng",
